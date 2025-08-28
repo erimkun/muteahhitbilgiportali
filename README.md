@@ -1,108 +1,173 @@
-# MuteahhitHub 🏗️
+# MuteahhitHub
 
-Modern inşaat projeleri için gelişmiş 3D görselleştirme ve yönetim platformu.
+3D Bina Görüntüleme ve Yönetim Platformu
 
-## 🚀 Özellikler
+## Proje Hakkında
 
-- **3D Model Görüntüleme**: Cesium.js ile gelişmiş 3D model desteği
-- **Drone Fotoğrafları**: Havadan çekim görüntüleri
-- **Kat Planları**: Detaylı bina kat planları
-- **360° Görünüm**: İnteraktif 360 derece görüntüleme
-- **Admin Paneli**: Gelişmiş yönetim araçları
-- **Ölçüm Araçları**: Hassas mesafe ve alan hesaplamaları
-- **Model Düzenleme**: 3D modellerde kesme ve düzenleme
+MuteahhitHub, inşaat projelerini 3D olarak görüntülemek ve yönetmek için geliştirilmiş bir web uygulamasıdır. Cesium.js kullanarak 3D bina modellerini, drone fotoğraflarını ve kat planlarını görüntüler.
 
-## 🛠️ Teknolojiler
+## Özellikler
 
-- **Frontend**: React.js, Cesium.js, Tailwind CSS
-- **Backend**: Node.js, Express.js
-- **Veritabanı**: SQLite
-- **3D Rendering**: Cesium.js
-- **Build Tool**: Vite
+- 🏗️ 3D Bina Modeli Görüntüleme
+- 📸 Drone Fotoğraf Yönetimi
+- 📐 Kat Planı Görüntüleme
+- 🎯 360° Görünüm
+- 📏 Ölçüm Araçları
+- 🔧 Admin Panel ve Düzenleme Araçları
+- 👤 Kullanıcı Bazlı Erişim Kontrolü
 
-## 📁 Proje Yapısı
+## Teknolojiler
 
-```
-├── frontend/          # React frontend uygulaması
-│   ├── components/    # UI bileşenleri
-│   ├── pages/        # Sayfa bileşenleri
-│   ├── context/      # React context'leri
-│   └── utils/        # Yardımcı fonksiyonlar
-├── backend/           # Node.js backend API
-│   ├── uploads/      # Yüklenen dosyalar
-│   └── database.js   # Veritabanı bağlantısı
-└── public/            # Statik dosyalar ve 3D modeller
-```
+- **Frontend:** React + Vite + Cesium.js
+- **Backend:** Node.js + Express
+- **Veritabanı:** SQLite
+- **3D Görselleştirme:** Cesium.js
+- **Stil:** Tailwind CSS
 
-## 🚀 Kurulum
+## Kurulum
 
 ### Gereksinimler
-- Node.js (v16 veya üzeri)
-- npm veya yarn
 
-### Frontend Kurulumu
+- Node.js (v16 veya üzeri)
+- Git
+- Git LFS
+
+### Git LFS Kurulumu
+
+Proje büyük 3D model dosyaları içerdiği için Git LFS kullanılmaktadır.
+
+#### Windows
 ```bash
-cd frontend
-npm install
-npm run dev
+# Git LFS'i indirin ve kurun
+# https://git-lfs.com/ adresinden indirin
+
+# Veya Chocolatey ile:
+choco install git-lfs
+
+# Kurulum sonrası:
+git lfs install
 ```
 
-### Backend Kurulumu
+#### macOS
+```bash
+# Homebrew ile:
+brew install git-lfs
+
+# Kurulum sonrası:
+git lfs install
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+# APT ile:
+sudo apt install git-lfs
+
+# Kurulum sonrası:
+git lfs install
+```
+
+### Proje Kurulumu
+
+1. **Repository'yi klonlayın:**
+```bash
+git clone https://github.com/uskudarkentas/MuteahhitHub.git
+cd MuteahhitHub
+```
+
+2. **Git LFS dosyalarını indirin:**
+```bash
+git lfs pull
+```
+
+3. **Backend bağımlılıklarını yükleyin:**
 ```bash
 cd backend
 npm install
+```
+
+4. **Frontend bağımlılıklarını yükleyin:**
+```bash
+cd ../frontend
+npm install
+```
+
+## Çalıştırma
+
+### Backend
+```bash
+cd backend
 npm start
 ```
 
-## 📸 Özellikler Detayı
-
-### 3D Model Görüntüleme
-- Cesium.js tabanlı 3D render motoru
-- Yüksek performanslı tile-based rendering
-- PBR (Physically Based Rendering) desteği
-
-### Admin Araçları
-- Model seçim ve düzenleme
-- Alan kesme ve ölçüm
-- Logo ve bina konumlandırma
-- Otomatik alan hesaplama
-
-### Dosya Yönetimi
-- Drone fotoğrafları
-- Kat planları (JPG formatında)
-- 3D modeller (GLTF/B3DM formatında)
-- PDF dokümanlar
-
-## 🔧 Geliştirme
-
-### Kod Standartları
-- ESLint konfigürasyonu
-- Prettier formatlaması
-- Component-based mimari
-
-### Test
+### Frontend
 ```bash
-npm run test
+cd frontend
+npm run dev
 ```
 
-## 📝 Lisans
+## Proje Yapısı
+
+```
+MuteahhitHub/
+├── backend/                 # Node.js backend
+│   ├── database.js         # Veritabanı bağlantısı
+│   ├── index.js            # Ana sunucu dosyası
+│   └── uploads/            # Yüklenen dosyalar
+├── frontend/               # React frontend
+│   ├── components/         # React bileşenleri
+│   ├── pages/             # Sayfa bileşenleri
+│   └── public/            # Statik dosyalar ve 3D modeller
+└── .gitattributes         # Git LFS konfigürasyonu
+```
+
+## Git LFS ile Çalışma
+
+### Yeni Büyük Dosya Ekleme
+```bash
+# Dosyayı ekleyin
+git add large-file.b3dm
+
+# Commit yapın
+git commit -m "Add large 3D model file"
+
+# Push yapın
+git push
+```
+
+### Büyük Dosyaları Güncelleme
+```bash
+# Dosyayı güncelleyin
+git add updated-file.b3dm
+
+# Commit yapın
+git commit -m "Update 3D model file"
+
+# Push yapın
+git push
+```
+
+### LFS Dosyalarını Kontrol Etme
+```bash
+# LFS ile takip edilen dosyaları görün
+git lfs ls-files
+
+# LFS durumunu kontrol edin
+git lfs status
+```
+
+## Katkıda Bulunma
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Pull Request oluşturun
+
+## Lisans
 
 Bu proje MIT lisansı altında lisanslanmıştır.
 
-## 🤝 Katkıda Bulunma
+## İletişim
 
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/AmazingFeature`)
-3. Commit yapın (`git commit -m 'Add some AmazingFeature'`)
-4. Push yapın (`git push origin feature/AmazingFeature`)
-5. Pull Request oluşturun
-
-## 📞 İletişim
-
-- **Proje**: MuteahhitHub
-- **Geliştirici**: Uskudar Kentas
-- **GitHub**: [uskudarkentas/MuteahhitHub](https://github.com/uskudarkentas/MuteahhitHub)
-
----
-
-⭐ Bu projeyi beğendiyseniz yıldız vermeyi unutmayın!
+- Proje Sahibi: [@uskudarkentas](https://github.com/uskudarkentas)
+- Proje Linki: [https://github.com/uskudarkentas/MuteahhitHub](https://github.com/uskudarkentas/MuteahhitHub)
