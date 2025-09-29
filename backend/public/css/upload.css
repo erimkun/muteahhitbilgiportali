@@ -1,0 +1,169 @@
+/* Extracted from inline styles in upload.html */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+.nav-links {
+  display: flex;
+  gap: 15px;
+}
+.nav-links a, .nav-links button {
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: background-color 0.3s;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+.nav-links a:hover, .nav-links button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.logout-btn {
+  background: #ef4444 !important;
+}
+.upload-section {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+select, input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+input[type="file"] {
+  padding: 8px;
+}
+.file-drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+.file-drop-zone:hover {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+.file-drop-zone.dragover {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.2);
+}
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+button:hover {
+  transform: translateY(-2px);
+}
+button:disabled {
+  background: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 15px 0;
+  display: none;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+.message {
+  padding: 15px;
+  border-radius: 6px;
+  margin: 15px 0;
+  font-weight: 600;
+  display: none;
+}
+.success {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+.error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+}
+.file-list {
+  margin-top: 20px;
+}
+.file-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -15,7 +15,7 @@ const colorClasses = {
 
 export default function Card({ title, subtitle, icon: Icon, actions = [], color = 'slate' }) {
   return (
-    <div className={`snap-center min-w-full sm:min-w-[320px] lg:min-w-[360px] rounded-xl border ring-1 ring-inset backdrop-blur-xl p-4 flex flex-col gap-3 hover:-translate-y-0.5 transition-all duration-300 ${colorClasses[color]}`}>
+    <div className={`snap-start flex-shrink-0 min-w-full sm:min-w-[320px] lg:min-w-[360px] w-full sm:w-[320px] lg:w-[360px] rounded-xl border ring-1 ring-inset backdrop-blur-xl p-4 flex flex-col gap-3 hover:-translate-y-0.5 transition-all duration-300 ${colorClasses[color]}`}>
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg tracking-tight font-semibold text-white">{title}</h3>

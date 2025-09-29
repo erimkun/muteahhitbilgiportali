@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dosya Yönetimi - Admin Panel</title>
+  <link rel="stylesheet" href="/css/file-manager.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>🗂️ Dosya Yönetimi - Admin Panel</h1>
+        <p id="adminInfo">Yükleniyor...</p>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="projectsBtn">🏗️ Projeler</button>
+        <button class="btn btn-danger" id="logoutBtn">Çıkış</button>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="files">📁 Dosya Yönetimi</button>
+      <button class="nav-tab" data-tab="upload">⬆️ Dosya Yükleme</button>
+      <button class="nav-tab" data-tab="users">👥 Kullanıcı Yönetimi</button>
+      <button class="nav-tab" data-tab="stats">📊 İstatistikler</button>
+    </div>
+
+    <div class="message" id="message" style="display:none"></div>
+
+    <!-- Dosya Yönetimi Tab -->
+    <div class="tab-content active" id="files-tab">
+      <div class="content-grid">
+        <div class="sidebar">
+          <h3>📋 Projeler</h3>
+          <ul class="project-list" id="projectList">
+            <li class="project-item">Projeler yükleniyor...</li>
+          </ul>
+        </div>
+        <div class="main-content">
+          <div id="filesContent">
+            <p style="text-align: center; color: rgba(255,255,255,0.6); padding: 40px;">
+              👈 Soldan bir proje seçin
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dosya Yükleme Tab -->
+    <div class="tab-content" id="upload-tab">
+      <div class="form-group">
+        <label for="uploadProject">Proje Seçin</label>
+        <select id="uploadProject">
+          <option value="">Proje seçin...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="uploadCategory">Dosya Kategorisi</label>
+        <select id="uploadCategory">
+          <option value="drone_photos">🚁 Drone Fotoğrafları (Görseller)</option>
+          <option value="drone_photos_file">🚁 Drone Fotoğrafları (Arşiv)</option>
+          <option value="floor_plans">📐 Kat Planları (Görseller)</option>
+          <option value="floor_plans_file">📐 Kat Planları (DWG/ZIP)</option>
+          <option value="orthophoto">🗺️ Ortofoto</option>
+          <option value="view_360">🌐 360° Görünüm</option>
+          <option value="fbx_model_file">🏗️ 3D Model (FBX ZIP)</option>
+          <option value="muteahhit">🏗️ Müteahhit Deposu (Serbest)</option>
+          <option value="other">📋 Diğer Belgeler</option>
+        </select>
+      </div>
+
+      <div class="upload-zone" id="uploadZone">
+        <p>📎 Dosyaları buraya sürükleyin veya tıklayın</p>
+        <p style="font-size: 12px; opacity: 0.7;">JPG, PNG, PDF, DWG, ZIP, RAR, FBX desteklenir</p>
+        <input type="file" id="fileInput" multiple accept="image/*,.pdf,.dwg,.zip,.rar,.fbx" style="display: none;">
+      </div>
+
+      <div id="selectedFiles" style="margin: 20px 0;"></div>
+      <div class="progress-bar" id="uploadProgress">
+        <div class="progress-fill" id="uploadProgressFill"></div>
+      </div>
+
+      <button class="btn btn-primary" id="uploadBtn" disabled>
+        📤 Dosyaları Yükle
+      </button>
+    </div>
+
+    <!-- Kullanıcı Yönetimi Tab -->
+    <div class="tab-content" id="users-tab">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>👥 Kullanıcı Listesi</h3>
+        <button class="btn btn-primary" id="addUserBtn">➕ Yeni Kullanıcı</button>
+      </div>
+
+      <table class="user-table" id="userTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Telefon</th>
+            <th>Rol</th>
+            <th>Durum</th>
+            <th>Atanan Projeler</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody">
+          <tr><td colspan="6" style="text-align: center;">Kullanıcılar yükleniyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- İstatistikler Tab -->
+    <div class="tab-content" id="stats-tab">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-value" id="totalProjects">-</div>
+          <div class="stat-label">Toplam Proje</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalFiles">-</div>
+          <div class="stat-label">Toplam Dosya</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalUsers">-</div>
+          <div class="stat-label">Toplam Kullanıcı</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalSize">-</div>
+          <div class="stat-label">Toplam Boyut</div>
+        </div>
+      </div>
+
+      <h3>📈 Proje Bazında Dosya Dağılımı</h3>
+      <div id="projectStats"></div>
+    </div>
+  </div>
+
+  <script defer src="/js/file-manager.js"></script>
+</body>
+</html>

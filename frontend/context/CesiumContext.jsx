@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
+import { createApiUrl } from '../config/api';
 
-const CesiumContext = createContext(null);
+export const CesiumContext = createContext(null);
 
 // Load saved building transform: prefer published, fallback to working, else default
 const loadBuildingTransform = () => {
@@ -85,15 +86,73 @@ export function CesiumProvider({ children, projectId: initialProjectId = 1 }) {
     let abort = false;
     async function loadProject(){
       try{
-        const res = await fetch(`http://localhost:3001/api/projects/${projectId}`);
+        console.log('[CesiumContext] Loading project:', projectId);
+        const res = await fetch(createApiUrl(`api/projects/${projectId}`), {
+          credentials: 'include'
+        });
+        console.log('[CesiumContext] Fetch response status:', res.status, res.ok);
         if (!res.ok) return;
         const js = await res.json();
+        console.log('[CesiumContext] Project data:', js);
         if (!abort && js && js.data && js.data.project_code){
+          console.log('[CesiumContext] Setting project_code:', js.data.project_code);
           setProjectCode(js.data.project_code);
         }
-      }catch(_){ /* ignore */ }
+      }catch(err){ 
+        console.error('[CesiumContext] Failed to load project:', err);
+      }
     }
     loadProject();
+    return () => { abort = true; };
+  }, [projectId]);
+
+  // Load published model data from backend
+  useEffect(() => {
+    let abort = false;
+    async function loadPublishedModel(){
+      try{
+        console.log('[CesiumContext] Loading published model for project:', projectId);
+        const res = await fetch(createApiUrl(`api/projects/${projectId}/model/published`), {
+          credentials: 'include'
+        });
+        console.log('[CesiumContext] Published model response status:', res.status, res.ok);
+        if (!res.ok) return;
+        const js = await res.json();
+        console.log('[CesiumContext] Published model data:', js);
+        
+        if (!abort && js && js.data) {
+          const data = js.data;
+          
+          // Update localStorage with published data (backend already parsed JSON)
+          if (data.building_transform) {
+            localStorage.setItem('publishedBuildingTransform', JSON.stringify(data.building_transform));
+            console.log('[CesiumContext] Updated published building transform:', data.building_transform);
+          }
+          
+          if (data.logo_transform) {
+            localStorage.setItem('publishedLogoTransform', JSON.stringify(data.logo_transform));
+            console.log('[CesiumContext] Updated published logo transform:', data.logo_transform);
+          }
+          
+          if (data.tileset_clips) {
+            localStorage.setItem('publishedTilesetClips', JSON.stringify(data.tileset_clips));
+            console.log('[CesiumContext] Updated published tileset clips:', data.tileset_clips);
+          }
+          
+          if (data.model_clip_planes) {
+            localStorage.setItem('publishedModelClipPlanes', JSON.stringify(data.model_clip_planes));
+            console.log('[CesiumContext] Updated published model clip planes:', data.model_clip_planes);
+          }
+          
+          // Force reload the transforms from localStorage (now with published data)
+          setBuildingTransform(loadBuildingTransform());
+          setLogoTransform(loadLogoTransform());
+        }
+      }catch(err){ 
+        console.error('[CesiumContext] Failed to load published model:', err);
+      }
+    }
+    loadPublishedModel();
     return () => { abort = true; };
   }, [projectId]);
 

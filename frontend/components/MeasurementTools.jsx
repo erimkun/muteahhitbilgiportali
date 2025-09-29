@@ -433,7 +433,7 @@ const MeasurementTools = ({ viewer }) => {
 
   if (!viewer || viewer.isDestroyed() || !isViewerReady) {
     return (
-      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-2 z-10">
+      <div className="pointer-events-none absolute left-4 top-1/2 hidden -translate-y-1/2 flex-col gap-2 z-10 sm:flex">
         <div className="w-12 h-12 rounded-lg bg-gray-400/50 border border-gray-500/50 flex items-center justify-center">
           <i className="fas fa-spinner fa-spin text-gray-600" />
         </div>
@@ -442,7 +442,7 @@ const MeasurementTools = ({ viewer }) => {
   }
 
   return (
-    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 flex flex-col gap-2 z-10">
+    <div className="pointer-events-auto absolute left-4 top-1/2 hidden -translate-y-1/2 flex-col gap-2 z-10 sm:flex">
       {toolButtons.map((tool) => (
         <button
           key={tool.id}

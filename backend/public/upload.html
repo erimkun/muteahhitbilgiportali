@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dosya Yükleme</title>
+  <link rel="stylesheet" href="/css/upload.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>📁 Dosya Yükleme</h1>
+        <p id="adminInfo">Yükleniyor...</p>
+      </div>
+      <div class="nav-links">
+  <a href="/projects">🏗️ Projeler</a>
+  <a href="/files">🗂️ Dosya Yöneticisi</a>
+        <button class="logout-btn" onclick="logout()">Çıkış</button>
+      </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <div class="grid">
+      <!-- Proje Seçimi ve Genel Dosyalar -->
+      <div class="upload-section">
+        <h2>📋 Proje Seçimi</h2>
+        <div class="form-group">
+          <label for="projectSelect">Proje Seçin *</label>
+          <select id="projectSelect" required>
+            <option value="">Proje yükleniyor...</option>
+          </select>
+        </div>
+        
+        <h3>📄 Genel Dosyalar</h3>
+        <form id="generalUploadForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="fileType">Dosya Türü</label>
+            <select id="fileType" name="fileType">
+              <option value="files">Genel Dosyalar</option>
+              <option value="other">Diğer Belgeler</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Dosya Seçin</label>
+            <div class="file-drop-zone" onclick="document.getElementById('generalFiles').click()">
+              <p>📎 Dosyaları buraya sürükleyin veya tıklayın</p>
+              <p style="font-size: 14px; opacity: 0.7;">PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR</p>
+            </div>
+            <input type="file" id="generalFiles" name="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" style="display: none;">
+          </div>
+          <div id="generalFileList" class="file-list"></div>
+          <div class="progress-bar" id="generalProgress">
+            <div class="progress-fill" id="generalProgressFill"></div>
+          </div>
+          <button type="submit" id="generalUploadBtn">Dosyaları Yükle</button>
+        </form>
+      </div>
+
+      <!-- İmaj Yüklemeleri -->
+      <div class="upload-section">
+        <h2>🖼️ İmaj Yüklemeleri</h2>
+        <form id="imageUploadForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="imageType">İmaj Türü</label>
+            <select id="imageType" name="imageType">
+              <option value="drone_photos">Drone Fotoğrafları</option>
+              <option value="floor_plans">Kat Planları</option>
+              <option value="orthophoto">Ortofoto</option>
+              <option value="view_360">360° Görünüm</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>İmaj Dosyaları Seçin</label>
+            <div class="file-drop-zone" onclick="document.getElementById('imageFiles').click()">
+              <p>🖼️ İmajları buraya sürükleyin veya tıklayın</p>
+              <p style="font-size: 14px; opacity: 0.7;">JPG, JPEG, PNG, TIFF</p>
+            </div>
+            <input type="file" id="imageFiles" name="files" multiple accept=".jpg,.jpeg,.png,.tiff,.tif" style="display: none;">
+          </div>
+          <div id="imageFileList" class="file-list"></div>
+          <div class="progress-bar" id="imageProgress">
+            <div class="progress-fill" id="imageProgressFill"></div>
+          </div>
+          <button type="submit" id="imageUploadBtn">İmajları Yükle</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="/js/upload.js"></script>
+</body>
+</html>

@@ -1,16 +1,49 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import KentasLogoWhite from '/KentasLogoWhite.png';
+import { createApiUrl } from '../config/api';
 import './Login.css';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState('credentials'); // 'credentials' or 'otp'
+  const [loading, setLoading] = useState(false);
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [remainingTime, setRemainingTime] = useState(0);
   const [errors, setErrors] = useState({});
+  const [checking, setChecking] = useState(true);
   const canvasRef = useRef(null);
   const navigate = useNavigate();
 
-  function validate() {
+  // Check if user is already logged in
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const res = await fetch(createApiUrl('session'), {
+          credentials: 'include'
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          // If user is already logged in, redirect to profile
+          if (data.success && data.data?.user) {
+            navigate('/profile');
+            return;
+          }
+        }
+      } catch (error) {
+        console.log('No existing session');
+      } finally {
+        setChecking(false);
+      }
+    }
+    
+    checkExistingSession();
+  }, [navigate]);
+
+  function validateCredentials() {
     const e = {};
     const digits = phone.replace(/\D/g, '');
     if (!digits) e.phone = 'Telefon numarası gerekli';
@@ -21,20 +54,99 @@ export default function Login() {
     return Object.keys(e).length === 0;
   }
 
-  function onSubmit(e) {
-    e.preventDefault();
-    // TEMP: Bypass auth for demo credentials to go directly to app/1
-    // Remove this block when real authentication is implemented.
-    try {
-      const digits = phone.replace(/\D/g, '');
-      if (digits === '05326225500' && password === 'demo123') {
-        navigate('/app/1');
-        return;
-      }
-    } catch (_) {}
+  function validateOTP() {
+    const e = {};
+    if (!otp || otp.length !== 6) e.otp = '6 haneli doğrulama kodu girin';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  }
 
-    if (!validate()) return;
-    console.log('Giriş denemesi', { phone: phone.replace(/.(?=.{2})/g, '*'), password: '******' });
+  async function onSubmitCredentials(e) {
+    e.preventDefault();
+    if (!validateCredentials()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const res = await fetch(createApiUrl('validate-credentials'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ phone, password })
+      });
+
+      const js = await res.json();
+
+      if (res.ok) {
+        setStep('otp');
+        setOtpExpiresAt(new Date(js.data.expiresAt));
+        setRemainingTime(300); // 5 minutes
+      } else {
+        setErrors({ form: js.error || 'Doğrulama başarısız' });
+      }
+    } catch (err) {
+      setErrors({ form: 'Bağlantı hatası: ' + err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSubmitOTP(e) {
+    e.preventDefault();
+    if (!validateOTP()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const res = await fetch(createApiUrl('verify-otp'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ phone, otp })
+      });
+
+      const js = await res.json();
+
+      if (res.ok) {
+        // Navigate to profile page after successful login
+        navigate('/profile');
+      } else {
+        setErrors({ form: js.error || 'Doğrulama başarısız' });
+      }
+    } catch (err) {
+      setErrors({ form: 'Bağlantı hatası: ' + err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Timer for OTP expiration
+  useEffect(() => {
+    if (step === 'otp' && remainingTime > 0) {
+      const timer = setTimeout(() => {
+        setRemainingTime(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (remainingTime === 0 && step === 'otp') {
+      setStep('credentials');
+      setErrors({ form: 'Doğrulama kodu süresi doldu. Tekrar deneyin.' });
+    }
+  }, [step, remainingTime]);
+
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function resetToCredentials() {
+    setStep('credentials');
+    setOtp('');
+    setOtpExpiresAt(null);
+    setRemainingTime(0);
+    setErrors({});
   }
 
   useEffect(() => {
@@ -54,86 +166,86 @@ export default function Login() {
 
     const vertexShaderSource = `attribute vec2 a_position; void main(){ gl_Position = vec4(a_position,0.0,1.0); }`;
 
-  const fragmentShaderSource = `precision mediump float; uniform float u_time; uniform vec2 u_resolution;
+    const fragmentShaderSource = `precision mediump float; uniform float u_time; uniform vec2 u_resolution;
 
-      vec3 aurora(vec2 uv, float time) {
-        vec2 p = uv - 0.5;
-        p.y += 0.3;
+        vec3 aurora(vec2 uv, float time) {
+          vec2 p = uv - 0.5;
+          p.y += 0.3;
 
-        float wave1 = sin(p.x * 3.0 + time * 0.5) * 0.08;
-        float wave2 = sin(p.x * 5.0 + time * 0.7 + sin(time * 0.3) * 2.0) * 0.04;
-        float wave3 = sin(p.x * 7.0 + time * 1.1 + cos(time * 0.4) * 1.5) * 0.025;
-        float wave4 = sin(p.x * 2.0 + time * 0.3 + sin(time * 0.6) * 3.0) * 0.06;
+          float wave1 = sin(p.x * 3.0 + time * 0.5) * 0.08;
+          float wave2 = sin(p.x * 5.0 + time * 0.7 + sin(time * 0.3) * 2.0) * 0.04;
+          float wave3 = sin(p.x * 7.0 + time * 1.1 + cos(time * 0.4) * 1.5) * 0.025;
+          float wave4 = sin(p.x * 2.0 + time * 0.3 + sin(time * 0.6) * 3.0) * 0.06;
 
-        float y = p.y - wave1 - wave2 - wave3 - wave4;
+          float y = p.y - wave1 - wave2 - wave3 - wave4;
 
-        float intensity1 = exp(-abs(y) * 16.0) * 0.375;
-        float intensity2 = exp(-abs(y + 0.1) * 24.0) * 0.3;
-        float intensity3 = exp(-abs(y - 0.05) * 30.0) * 0.225;
+          float intensity1 = exp(-abs(y) * 16.0) * 0.375;
+          float intensity2 = exp(-abs(y + 0.1) * 24.0) * 0.3;
+          float intensity3 = exp(-abs(y - 0.05) * 30.0) * 0.225;
 
-        vec3 color1 = vec3(0.2, 0.8, 0.9) * intensity1;
-        vec3 color2 = vec3(0.5, 0.3, 0.9) * intensity2;
-        vec3 color3 = vec3(0.1, 0.9, 0.6) * intensity3;
+          vec3 color1 = vec3(0.2, 0.8, 0.9) * intensity1;
+          vec3 color2 = vec3(0.5, 0.3, 0.9) * intensity2;
+          vec3 color3 = vec3(0.1, 0.9, 0.6) * intensity3;
 
-        return color1 + color2 + color3;
-      }
-
-      vec3 secondaryAurora(vec2 uv, float time) {
-        vec2 p = uv - 0.5;
-        p.y += 0.1;
-
-        float wave1 = sin(p.x * 2.0 + time * 0.3 + sin(time * 0.2) * 2.5) * 0.06;
-        float wave2 = cos(p.x * 4.0 + time * 0.5 + cos(time * 0.35) * 1.8) * 0.03;
-        float y = p.y - wave1 - wave2;
-
-        float intensity = exp(-abs(y) * 12.0) * 0.225;
-        return vec3(0.8, 0.2, 0.7) * intensity;
-      }
-
-      vec3 tertiaryAurora(vec2 uv, float time) {
-        vec2 p = uv - 0.5;
-        p.y -= 0.2;
-
-        float wave1 = sin(p.x * 1.5 + time * 0.4 + sin(time * 0.25) * 3.0) * 0.07;
-        float wave2 = cos(p.x * 3.5 + time * 0.6 + cos(time * 0.45) * 2.2) * 0.035;
-        float y = p.y - wave1 - wave2;
-
-        float intensity = exp(-abs(y) * 18.0) * 0.18;
-        return vec3(0.3, 0.9, 0.5) * intensity;
-      }
-
-      float noise(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-      }
-
-      void main() {
-        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-
-        vec3 color = vec3(0.03, 0.03, 0.075);
-
-        color += aurora(uv, u_time);
-        color += secondaryAurora(uv, u_time + 3.0);
-        color += tertiaryAurora(uv, u_time + 1.5);
-
-        vec2 starUv = uv * 120.0;
-        vec2 starId = floor(starUv);
-        vec2 starFract = fract(starUv);
-
-        float star = noise(starId);
-        if (star > 0.985) {
-          float starBrightness = (sin(u_time * 1.5 + star * 8.0) * 0.3 + 0.4) * 0.75;
-          float starDist = length(starFract - 0.5);
-          if (starDist < 0.03) {
-            color += vec3(0.8, 0.9, 1.0) * (1.0 - starDist * 30.0) * starBrightness;
-          }
+          return color1 + color2 + color3;
         }
 
-        float glow = 1.0 - length(uv - 0.5) * 0.6;
-        color += vec3(0.075, 0.15, 0.225) * glow * 0.225;
+        vec3 secondaryAurora(vec2 uv, float time) {
+          vec2 p = uv - 0.5;
+          p.y += 0.1;
 
-        gl_FragColor = vec4(color, 1.0);
-      }
-`;
+          float wave1 = sin(p.x * 2.0 + time * 0.3 + sin(time * 0.2) * 2.5) * 0.06;
+          float wave2 = cos(p.x * 4.0 + time * 0.5 + cos(time * 0.35) * 1.8) * 0.03;
+          float y = p.y - wave1 - wave2;
+
+          float intensity = exp(-abs(y) * 12.0) * 0.225;
+          return vec3(0.8, 0.2, 0.7) * intensity;
+        }
+
+        vec3 tertiaryAurora(vec2 uv, float time) {
+          vec2 p = uv - 0.5;
+          p.y -= 0.2;
+
+          float wave1 = sin(p.x * 1.5 + time * 0.4 + sin(time * 0.25) * 3.0) * 0.07;
+          float wave2 = cos(p.x * 3.5 + time * 0.6 + cos(time * 0.45) * 2.2) * 0.035;
+          float y = p.y - wave1 - wave2;
+
+          float intensity = exp(-abs(y) * 18.0) * 0.18;
+          return vec3(0.3, 0.9, 0.5) * intensity;
+        }
+
+        float noise(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+
+          vec3 color = vec3(0.03, 0.03, 0.075);
+
+          color += aurora(uv, u_time);
+          color += secondaryAurora(uv, u_time + 3.0);
+          color += tertiaryAurora(uv, u_time + 1.5);
+
+          vec2 starUv = uv * 120.0;
+          vec2 starId = floor(starUv);
+          vec2 starFract = fract(starUv);
+
+          float star = noise(starId);
+          if (star > 0.985) {
+            float starBrightness = (sin(u_time * 1.5 + star * 8.0) * 0.3 + 0.4) * 0.75;
+            float starDist = length(starFract - 0.5);
+            if (starDist < 0.03) {
+              color += vec3(0.8, 0.9, 1.0) * (1.0 - starDist * 30.0) * starBrightness;
+            }
+          }
+
+          float glow = 1.0 - length(uv - 0.5) * 0.6;
+          color += vec3(0.075, 0.15, 0.225) * glow * 0.225;
+
+          gl_FragColor = vec4(color, 1.0);
+        }
+  `;
 
     function createShader(gl, type, source) {
       const shader = gl.createShader(type);
@@ -149,7 +261,7 @@ export default function Login() {
       return shader;
     }
 
-    
+
     const vShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     const fShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     if (!vShader || !fShader) {
@@ -165,7 +277,7 @@ export default function Login() {
       console.error('Program link failed:', gl.getProgramInfoLog(program));
       return;
     }
-    
+
 
     const positionLoc = gl.getAttribLocation(program, 'a_position');
     const timeLoc = gl.getUniformLocation(program, 'u_time');
@@ -198,6 +310,27 @@ export default function Login() {
     };
   }, []);
 
+  // Show loading while checking existing session
+  if (checking) {
+    return (
+      <div className="relative min-h-screen text-white overflow-hidden font-geist">
+        <canvas
+          ref={canvasRef}
+          id="aurora-canvas"
+          style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: -10, pointerEvents: 'none' }}
+        />
+        <div className="fixed inset-0 flex items-center justify-center z-10">
+          <div className="card-border rounded-2xl p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
+              <p className="text-white">Kontrol ediliyor...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen text-white overflow-hidden font-geist">
       <canvas
@@ -226,11 +359,14 @@ export default function Login() {
 
             <div className="p-6">
               <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-white mb-2">Müteahhit Huba Hoşgeldiniz</h3>
-                <p className="text-white/60 text-sm">Hesabınıza telefon ve parola ile erişin</p>
+                <h3 className="text-xl font-semibold text-white mb-2">Müteahhit Bilgi Portalı'na Hoşgeldiniz</h3>
+                <p className="text-white/60 text-sm">
+                  {step === 'credentials' ? 'Hesabınıza telefon ve parola ile erişin' : 'SMS ile gönderilen doğrulama kodunu girin'}
+                </p>
               </div>
 
-              <form onSubmit={onSubmit} className="space-y-4">
+              {step === 'credentials' && (
+                <form onSubmit={onSubmitCredentials} className="space-y-4">
                 <div className="relative">
                   <label className="block text-sm font-medium text-white/80 mb-2">Telefon numarası</label>
                   <div className="relative">
@@ -285,25 +421,71 @@ export default function Login() {
                   {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="sr-only" />
-                    <div className="w-4 h-4 border-2 border-indigo-400/50 rounded glass flex items-center justify-center">
-                      <svg className="w-3 h-3 text-indigo-400 hidden" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center">
+                      <input type="checkbox" className="sr-only" />
+                      <div className="w-4 h-4 border-2 border-indigo-400/50 rounded glass flex items-center justify-center">
+                        <svg className="w-3 h-3 text-indigo-400 hidden" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="ml-2 text-white/60">Beni hatırla</span>
+                    </label>
+                    <a href="#" className="text-indigo-400 hover:text-indigo-300 transition">Şifremi unuttum?</a>
+                  </div>
+
+                  {errors.form && <p className="text-xs text-red-400">{errors.form}</p>}
+                  <button type="submit" disabled={loading} className="w-full login-button text-white font-medium py-3 px-4 rounded-lg transition hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50">
+                    {loading ? 'Doğrulanıyor...' : 'SMS Gönder'}
+                  </button>
+                </form>
+              )}
+
+              {step === 'otp' && (
+                <form onSubmit={onSubmitOTP} className="space-y-4">
+                  <div className="text-center mb-4">
+                    <p className="text-white/80 text-sm mb-2">SMS kodunu telefonunuza gönderdik</p>
+                    <p className="text-indigo-400 font-mono text-lg">{formatTime(remainingTime)}</p>
+                  </div>
+
+                  <div className="relative">
+                    <label className="block text-sm font-medium text-white/80 mb-2">Doğrulama Kodu</label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={otp}
+                        onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="123456"
+                        className={`input-field w-full px-4 py-3 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-0 text-center text-2xl font-mono tracking-widest ${errors.otp ? 'border-red-500' : ''}`}
+                        maxLength="6"
+                        autoComplete="one-time-code"
+                        onFocus={e => e.currentTarget.classList.add('animate-field-glow')}
+                        onBlur={e => e.currentTarget.classList.remove('animate-field-glow')}
+                      />
                     </div>
-                    <span className="ml-2 text-white/60">Beni hatırla</span>
-                  </label>
-                  <a href="#" className="text-indigo-400 hover:text-indigo-300 transition">Şifremi unuttum?</a>
-                </div>
+                    {errors.otp && <p className="mt-1 text-xs text-red-400">{errors.otp}</p>}
+                  </div>
 
-                <button type="submit" className="w-full login-button text-white font-medium py-3 px-4 rounded-lg transition hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500/50">Giriş Yap</button>
+                  {errors.form && <p className="text-xs text-red-400">{errors.form}</p>}
 
-                
-
-                
-              </form>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={resetToCredentials}
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition"
+                    >
+                      Geri
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading || remainingTime === 0}
+                      className="flex-1 login-button text-white font-medium py-3 px-4 rounded-lg transition hover:shadow-lg hover:shadow-purple-500/25 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+                    >
+                      {loading ? 'Doğrulanıyor...' : 'Giriş Yap'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

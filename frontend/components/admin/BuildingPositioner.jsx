@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import { useCesiumCtx } from '../../context/CesiumContext';
+import { createApiUrl } from '../../config/api';
 
 export default function BuildingPositioner() {
   const { 
@@ -128,7 +129,7 @@ export default function BuildingPositioner() {
         orientation,
         show: buildingTransform.visible,
         model: {
-          uri: `${base}/models/erimBaked.gltf`,
+          uri: `${base}/models/bina_model.gltf`,
           scale: buildingTransform.scale,
           minimumPixelSize: 64,
           maximumScale: 20000,
@@ -180,14 +181,14 @@ export default function BuildingPositioner() {
     try{
       const base = `/${projectCode}_project`;
       if (buildingEntity.model) {
-        buildingEntity.model.uri = `${base}/models/erimBaked.gltf`;
+        buildingEntity.model.uri = `${base}/models/bina_model.gltf`;
       }
     }catch(_){ /* ignore */ }
   }, [projectCode, buildingEntity]);
 
   // Apply transform updates to existing entity (no recreation)
   useEffect(() => {
-    if (!buildingEntity || !buildingTransform?.position) return; // Add guard for position
+    if (!buildingEntity || !buildingTransform?.position || !buildingTransform?.rotation) return; // Add guard for position and rotation
     const position = Cesium.Cartesian3.fromDegrees(
       buildingTransform.position.lon,
       buildingTransform.position.lat,
@@ -205,7 +206,7 @@ export default function BuildingPositioner() {
     }
     buildingEntity.show = buildingTransform.visible;
     updateGizmoPositions(position);
-  }, [buildingEntity, buildingTransform.position.lon, buildingTransform.position.lat, buildingTransform.position.height, buildingTransform.rotation.heading, buildingTransform.rotation.pitch, buildingTransform.rotation.roll, buildingTransform.scale, buildingTransform.visible, updateGizmoPositions]);
+  }, [buildingEntity, buildingTransform?.position?.lon, buildingTransform?.position?.lat, buildingTransform?.position?.height, buildingTransform?.rotation?.heading, buildingTransform?.rotation?.pitch, buildingTransform?.rotation?.roll, buildingTransform?.scale, buildingTransform?.visible, updateGizmoPositions]);
 
   // Keyboard controls
   useEffect(() => {
@@ -549,11 +550,12 @@ export default function BuildingPositioner() {
               tileset_clips: [],
               model_clip_planes: []
             };
-            fetch(`http://localhost:3001/api/projects/${projectId}/model`, {
+            fetch(createApiUrl(`api/projects/${projectId}/model`), {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
+              credentials: 'include',
               body: JSON.stringify(data),
             })
             .then(res => res.json())

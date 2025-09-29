@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Proje Yönetimi</title>
+  <link rel="stylesheet" href="/css/projects.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>🏗️ Proje Yönetimi</h1>
+        <p id="adminInfo">Yükleniyor...</p>
+      </div>
+  <div class="nav-links">
+  <a href="/upload">📁 Dosya Yükle</a>
+  <a href="/files">🗂️ Dosya Yöneticisi</a>
+    <button class="logout-btn" id="logoutBtn">Çıkış</button>
+  </div>
+    </div>
+
+    <div class="message" id="message" style="display: none;"></div>
+
+    <!-- Yeni Proje Oluşturma Formu -->
+    <div class="form-section">
+      <h2>➕ Yeni Proje Oluştur</h2>
+      <form id="createProjectForm">
+        <div class="form-group">
+          <label for="project_code">Proje Kodu *</label>
+          <input type="text" id="project_code" name="project_code" placeholder="Örn: 123_45" required>
+        </div>
+        <div class="form-group">
+          <label for="name">Proje Adı *</label>
+          <input type="text" id="name" name="name" placeholder="Proje adını girin" required>
+        </div>
+        <div class="form-group">
+          <label for="description">Açıklama</label>
+          <textarea id="description" name="description" rows="3" placeholder="Proje açıklaması (opsiyonel)"></textarea>
+        </div>
+        <button type="submit" id="createBtn">Proje Oluştur</button>
+      </form>
+    </div>
+
+    <!-- Mevcut Projeler -->
+    <div class="form-section">
+      <h2>📋 Mevcut Projeler</h2>
+      <div class="loading" id="loading">Projeler yükleniyor...</div>
+      <table class="projects-table" id="projectsTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Proje Kodu</th>
+            <th>Proje Adı</th>
+            <th>Açıklama</th>
+            <th>Durum</th>
+            <th>Oluşturma Tarihi</th>
+            <th>İşlemler</th>
+          </tr>
+        </thead>
+        <tbody id="projectsTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="/js/projects.js" defer></script>
+</body>
+</html>

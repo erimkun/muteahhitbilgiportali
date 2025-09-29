@@ -1,5 +1,12 @@
 const sqlite3 = require('sqlite3').verbose();
-const DBSOURCE = "db.sqlite";
+const path = require('path');
+// Allow overriding DB source for tests or alternate environments.
+// Use an absolute path rooted at this backend folder by default so that
+// starting the server from the workspace root does not create db.sqlite
+// in the workspace root.
+const config = require('./config/env');
+const defaultDbName = (config && config.database && config.database.filename) ? config.database.filename : 'db.sqlite';
+const DBSOURCE = process.env.DBSOURCE || path.join(__dirname, defaultDbName);
 
 const db = new sqlite3.Database(DBSOURCE, (err) => {
     if (err) {
@@ -132,6 +139,58 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
         )`, (err) => {
             if (err) {
                 console.error('Failed creating project_settings table', err);
+            }
+        });
+
+        // Users table (end-users without direct project assignment)
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT,
+            role TEXT DEFAULT 'user',
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login TIMESTAMP
+        )`, (err) => {
+            if (err) console.error('Failed creating users table', err);
+        });
+
+        // User-Project many-to-many relationship table
+        db.run(`CREATE TABLE IF NOT EXISTS user_projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            project_id INTEGER NOT NULL,
+            permissions TEXT DEFAULT 'read',
+            granted_by INTEGER,
+            assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+            FOREIGN KEY (granted_by) REFERENCES users (id),
+            UNIQUE(user_id, project_id)
+        )`, (err) => {
+            if (err) {
+                console.error('Failed creating user_projects table', err);
+            }
+        });
+
+        // Admins table
+        db.run(`CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT DEFAULT 'admin',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`, (err) => {
+            if (err) console.error('Failed creating admins table', err); else {
+                // Seed a default admin if none exists (phone: 05000000000 / password: admin123)
+                db.get('SELECT COUNT(*) AS c FROM admins', [], (e,row)=>{
+                    if(!e && row && row.c === 0){
+                        const bcrypt = require('bcryptjs');
+                        const hash = bcrypt.hashSync('admin123', 10);
+                        db.run('INSERT INTO admins (phone, password_hash, role) VALUES (?,?,?)', ['05000000000', hash, 'superadmin']);
+                    }
+                });
             }
         });
     }

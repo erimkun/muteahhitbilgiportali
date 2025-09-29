@@ -2,9 +2,13 @@ import React, { useRef, useEffect } from 'react';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import { useCesiumCtx } from '../../context/CesiumContext';
+import CameraViewSetup from './CameraViewSetup';
+import TopViewButton from './TopViewButton';
+import { createApiUrl } from '../../config/api';
 
 export default function AdminViewer({ projectId = 1 }) {
   const containerRef = useRef(null);
+  const viewerRef = useRef(null);
   const { registerViewer, registerTileset, setBuildingEntity, setBuildingTransform, setLogoEntity, setLogoTransform, projectCode } = useCesiumCtx();
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export default function AdminViewer({ projectId = 1 }) {
       viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#141414');
     }
 
+    viewerRef.current = viewer;
     registerViewer(viewer);
   // Expose for debugging
   window.__ADMIN_VIEWER = viewer;
@@ -115,7 +120,9 @@ export default function AdminViewer({ projectId = 1 }) {
   window.__ADMIN_TILESET = tileset;
       // Apply published tileset clipping polygons if exist
       // Load latest model data from the backend
-      fetch(`http://localhost:3001/api/projects/${projectId}/model/latest`)
+      fetch(createApiUrl(`api/projects/${projectId}/model/latest`), {
+        credentials: 'include'
+      })
         .then(res => res.json())
         .then(response => {
           const modelData = response.data;
@@ -133,7 +140,7 @@ export default function AdminViewer({ projectId = 1 }) {
 
           // Apply tileset clipping polygons
           try {
-            const clips = JSON.parse(modelData.tileset_clips);
+            const clips = modelData.tileset_clips;
             if (Array.isArray(clips) && clips.length > 0) {
               const polygons = clips.map(posArr => new Cesium.ClippingPolygon({ positions: posArr.map(p => new Cesium.Cartesian3(p.x, p.y, p.z)) }));
               tileset.clippingPolygons = new Cesium.ClippingPolygonCollection({ polygons, unionClippingRegions: true, edgeColor: Cesium.Color.CYAN, edgeWidth: 1 });
@@ -142,7 +149,7 @@ export default function AdminViewer({ projectId = 1 }) {
 
           // Load building model
           try {
-            const transform = JSON.parse(modelData.building_transform) || {
+            const transform = modelData.building_transform || {
               position: { lon: 29.0098, lat: 41.0195, height: 10 },
               rotation: { heading: 0, pitch: 0, roll: 0 },
               scale: 1.0,
@@ -163,7 +170,7 @@ export default function AdminViewer({ projectId = 1 }) {
               orientation,
               show: transform.visible,
               model: {
-                uri: `${base}/models/erimBaked.gltf`,
+                uri: `${base}/models/bina_model.gltf`,
                 scale: transform.scale,
                 minimumPixelSize: 64,
                 maximumScale: 20000,
@@ -181,7 +188,7 @@ export default function AdminViewer({ projectId = 1 }) {
 
             // Apply model clipping planes
             try {
-              const planes = JSON.parse(modelData.model_clip_planes);
+              const planes = modelData.model_clip_planes;
               if (Array.isArray(planes) && planes.length > 0) {
                 entity.model.clippingPlanes = new Cesium.ClippingPlaneCollection({
                   planes: planes.map(pl => new Cesium.ClippingPlane(new Cesium.Cartesian3(pl.normal.x, pl.normal.y, pl.normal.z), pl.distance)),
@@ -195,7 +202,7 @@ export default function AdminViewer({ projectId = 1 }) {
 
           // Load 360 logo model (if logo_transform present)
           try {
-            const logoTransform = JSON.parse(modelData.logo_transform || '{}');
+            const logoTransform = modelData.logo_transform || {};
             if (logoTransform && logoTransform.position) {
               setLogoTransform(logoTransform);
               if (logoTransform.visible !== false) {
@@ -211,7 +218,7 @@ export default function AdminViewer({ projectId = 1 }) {
                   position: logoPos,
                   orientation: logoOri,
                   model: {
-                    uri: `${base}/360views/360logo.gltf`,
+                    uri: `${base}/360views/panorama_${projectCode}.gltf`,
                     scale: logoTransform.scale || 1.0,
                     minimumPixelSize: 0,
                     maximumScale: 20000,
@@ -236,5 +243,13 @@ export default function AdminViewer({ projectId = 1 }) {
     };
   }, [registerViewer, registerTileset, setBuildingEntity, setBuildingTransform, setLogoEntity, setLogoTransform, projectCode]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {/* Camera View Setup Buttons - Right Middle */}
+      <CameraViewSetup projectId={projectId} viewer={viewerRef.current} />
+      {/* Top View Button - Right Top */}
+      <TopViewButton viewer={viewerRef.current} />
+    </div>
+  );
 }

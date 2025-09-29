@@ -5,6 +5,7 @@ import CuttingTool from './CuttingTool';
 import ModelCutTool from './ModelCutTool';
 import RestoreClipTool from './RestoreClipTool';
 import ModelSelectionTool from './ModelSelectionTool';
+import { createApiUrl } from '../../config/api';
 
 const tools = [
   { id: 'measure', label: 'Measure' },
@@ -26,7 +27,9 @@ export default function Toolbox() {
   const [expandedHistory, setExpandedHistory] = React.useState(false);
 
   const fetchHistory = React.useCallback(() => {
-    fetch(`http://localhost:3001/api/projects/${projectId}/model/history`)
+    fetch(createApiUrl(`api/projects/${projectId}/model/history`), {
+      credentials: 'include'
+    })
       .then(res => res.json())
       .then(response => {
         if (response.data) {
@@ -55,12 +58,20 @@ export default function Toolbox() {
         buildingEntity.orientation = Cesium.Transforms.headingPitchRollQuaternion(pos, hpr);
         if(buildingEntity.model){ buildingEntity.model.scale = bt.scale; buildingEntity.show = bt.visible; }
         setBuildingTransform(bt);
+        
+        // Update localStorage with published data for user view
+        localStorage.setItem('publishedBuildingTransform', JSON.stringify(bt));
       }
       // Tileset polygons (from snapshot or localStorage)
       const polysSrc = snapshot?.tilesetClips || ( ()=>{ try { return JSON.parse(localStorage.getItem('publishedTilesetClips')||'null'); } catch { return null; } })();
       if(polysSrc && tileset){
         const polygons = polysSrc.map(posArr => new Cesium.ClippingPolygon({ positions: posArr.map(p=> new Cesium.Cartesian3(p.x,p.y,p.z)) }));
         tileset.clippingPolygons = new Cesium.ClippingPolygonCollection({ polygons, unionClippingRegions:true, edgeColor: Cesium.Color.CYAN, edgeWidth:1 });
+        
+        // Update localStorage with published tileset clips for user view
+        if (snapshot?.tilesetClips) {
+          localStorage.setItem('publishedTilesetClips', JSON.stringify(snapshot.tilesetClips));
+        }
       }
       // Model clip planes
       const planesSource = snapshot?.modelClipPlanes || ( ()=>{ try { return JSON.parse(localStorage.getItem('publishedModelClipPlanes')||'null'); } catch { return null;} })();
@@ -71,6 +82,16 @@ export default function Toolbox() {
           edgeColor: Cesium.Color.CYAN,
           edgeWidth: 1.0
         });
+        
+        // Update localStorage with published model clip planes for user view
+        if (snapshot?.modelClipPlanes) {
+          localStorage.setItem('publishedModelClipPlanes', JSON.stringify(snapshot.modelClipPlanes));
+        }
+      }
+      
+      // Update logo transform if provided
+      if (snapshot?.logoTransform) {
+        localStorage.setItem('publishedLogoTransform', JSON.stringify(snapshot.logoTransform));
       }
     } catch(e){ console.warn('Apply published runtime fail', e); }
   }
@@ -110,9 +131,10 @@ export default function Toolbox() {
       };
 
       // 2. Save to database (create new version)
-      const saveResponse = await fetch(`http://localhost:3001/api/projects/${projectId}/model`, {
+      const saveResponse = await fetch(createApiUrl(`api/projects/${projectId}/model`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(dataToSave),
       });
       if (!saveResponse.ok) throw new Error('Failed to save model version.');
@@ -120,8 +142,9 @@ export default function Toolbox() {
       const newVersionId = savedData.data.id;
 
       // 3. Publish the new version
-      const publishResponse = await fetch(`http://localhost:3001/api/projects/${projectId}/model/publish/${newVersionId}`, {
+      const publishResponse = await fetch(createApiUrl(`api/projects/${projectId}/model/publish/${newVersionId}`), {
         method: 'PUT',
+        credentials: 'include',
       });
       if (!publishResponse.ok) throw new Error('Failed to publish model version.');
 
@@ -142,20 +165,23 @@ export default function Toolbox() {
 
   async function revertTo(id) {
     try {
-      const publishResponse = await fetch(`http://localhost:3001/api/projects/${projectId}/model/publish/${id}`, {
+      const publishResponse = await fetch(createApiUrl(`api/projects/${projectId}/model/publish/${id}`), {
         method: 'PUT',
+        credentials: 'include',
       });
       if (!publishResponse.ok) throw new Error('Failed to publish model version.');
 
       // Fetch the data for the reverted version to apply it to the runtime
-      const modelResponse = await fetch(`http://localhost:3001/api/projects/${projectId}/model/published`);
+      const modelResponse = await fetch(createApiUrl(`api/projects/${projectId}/model/published`), {
+        credentials: 'include'
+      });
       if(!modelResponse.ok) throw new Error('Failed to fetch reverted model data.');
       const revertedData = await modelResponse.json();
 
       applyPublishedToRuntime({
-        buildingTransform: JSON.parse(revertedData.data.building_transform),
-        tilesetClips: JSON.parse(revertedData.data.tileset_clips),
-        modelClipPlanes: JSON.parse(revertedData.data.model_clip_planes),
+        buildingTransform: revertedData.data.building_transform,
+        tilesetClips: revertedData.data.tileset_clips,
+        modelClipPlanes: revertedData.data.model_clip_planes,
       });
 
       setPubStatus('reverted');
@@ -171,8 +197,9 @@ export default function Toolbox() {
   async function fullReset() {
     if (!window.confirm('Tüm yayın geçmişi ve yayınlanmış durum silinecek. Emin misiniz?')) return;
     try {
-      const response = await fetch('http://localhost:3001/api/model/reset', {
+      const response = await fetch(createApiUrl('api/model/reset'), {
         method: 'DELETE',
+        credentials: 'include'
       });
       if (!response.ok) throw new Error('Failed to reset database.');
 

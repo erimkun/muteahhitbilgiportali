@@ -41,7 +41,7 @@ export default function LogoPositioner() {
       orientation,
       show: logoTransform.visible !== false,
       model: {
-        uri: `${base}/360views/360logo.gltf`,
+        uri: `${base}/360views/panorama_${projectCode}.gltf`,
         scale: logoTransform.scale || 1.0,
         minimumPixelSize: 0,
         maximumScale: 20000,

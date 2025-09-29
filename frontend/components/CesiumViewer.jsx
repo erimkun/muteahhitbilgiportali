@@ -3,6 +3,7 @@ import { useCesiumCtx } from '../context/CesiumContext';
 import * as Cesium from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import MeasurementTools from './MeasurementTools';
+import { createApiUrl } from '../config/api';
 
 export default function CesiumViewer({ projectId = 1 }) {
   const { projectCode } = useCesiumCtx?.() || { projectCode: '' };
@@ -27,6 +28,32 @@ export default function CesiumViewer({ projectId = 1 }) {
     const v = viewerRef.current;
     if (!v || v.isDestroyed()) return;
     v.camera.flyTo({ ...view, duration: 2, easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT });
+  };
+
+  // Set camera to 90° top-down view (directly overhead)
+  const setTopView = () => {
+    const v = viewerRef.current;
+    if (!v || v.isDestroyed()) return;
+
+    // Get current camera position to maintain X,Y coordinates
+    const currentPosition = v.camera.positionCartographic;
+    const currentLon = Cesium.Math.toDegrees(currentPosition.longitude);
+    const currentLat = Cesium.Math.toDegrees(currentPosition.latitude);
+    
+    // Set height for top-down view (adjust based on project scale)
+    const topViewHeight = 300;
+    
+    // Fly to top-down view with 90° pitch (looking straight down)
+    v.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(currentLon, currentLat, topViewHeight),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),  // North facing
+        pitch: Cesium.Math.toRadians(-90),  // Looking straight down
+        roll: 0
+      },
+      duration: 1.5,
+      easingFunction: Cesium.EasingFunction.CUBIC_IN_OUT
+    });
   };
 
   useEffect(() => {
@@ -58,9 +85,28 @@ export default function CesiumViewer({ projectId = 1 }) {
     setViewer(viewer);
     // Ensure animations advance (required for glTF animations)
     viewer.clock.shouldAnimate = true;
-
+    viewer.scene.camera.frustum.fov = Cesium.Math.toRadians(75.0);
     // Expose viewer to console for debugging
     window.cesiumViewer = viewer;
+
+    // === Lighting / Exposure Fix ===
+    viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date('2025-09-11T12:00:00Z'));
+    viewer.scene.globe.enableLighting = false; // keep globe lighting off (we control manually)
+    viewer.scene.highDynamicRange = false; // stops exposure adaptation
+    viewer.scene.sun.show = true; // allow Cesium sun for subtle ambient contribution
+    viewer.scene.postProcessStages.ambientOcclusion.enabled = false;
+    viewer.scene.fog.enabled = false;
+    // Camera-facing key light (updated each frame in preRender)
+    viewer.scene.light = new Cesium.DirectionalLight({
+      direction: viewer.camera.directionWC.clone(),
+      color: new Cesium.Color(5, 5, 5) // slight boost
+    }); 
+    viewer.scene.preRender.addEventListener(() => {
+      if (viewer?.scene?.light?.direction) {
+        Cesium.Cartesian3.clone(viewer.camera.directionWC, viewer.scene.light.direction);
+      }
+    });
+    // === End Lighting Fix ===
 
     // Add keyboard shortcut to get camera position/orientation
     const getCameraInfo = () => {
@@ -131,7 +177,9 @@ export default function CesiumViewer({ projectId = 1 }) {
     // Try to load per-project camera presets for all views
     (async () => {
       try{
-        const res = await fetch(`http://localhost:3001/api/projects/${projectId}/settings`);
+        const res = await fetch(createApiUrl(`api/projects/${projectId}/settings`), {
+          credentials: 'include'
+        });
         if(!res.ok) return;
         const js = await res.json();
         const s = js && js.data ? js.data : null;
@@ -215,7 +263,9 @@ export default function CesiumViewer({ projectId = 1 }) {
         fly(initialView);
       });
       // Fetch and apply published model data
-      fetch(`http://localhost:3001/api/projects/${projectId}/model/published`)
+      fetch(createApiUrl(`api/projects/${projectId}/model/published`), {
+        credentials: 'include'
+      })
         .then(res => res.json())
         .then(response => {
           const modelData = response.data;
@@ -223,7 +273,7 @@ export default function CesiumViewer({ projectId = 1 }) {
 
           // Apply tileset clipping polygons
           try {
-            const clips = JSON.parse(modelData.tileset_clips);
+            const clips = modelData.tileset_clips;
             if (Array.isArray(clips) && clips.length > 0) {
               const polygons = clips.map(posArr => new Cesium.ClippingPolygon({ positions: posArr.map(p => new Cesium.Cartesian3(p.x, p.y, p.z)) }));
               ts.clippingPolygons = new Cesium.ClippingPolygonCollection({ polygons, unionClippingRegions: true, edgeColor: Cesium.Color.CYAN, edgeWidth: 1 });
@@ -232,10 +282,10 @@ export default function CesiumViewer({ projectId = 1 }) {
 
           // Load building model
           try {
-            // Safely parse transform; if missing, place at tileset center by default
+            // Safely get transform; if missing, place at tileset center by default
             let transform = null;
             try {
-              transform = modelData?.building_transform ? JSON.parse(modelData.building_transform) : null;
+              transform = modelData?.building_transform ? modelData.building_transform : null;
             } catch (_e) { transform = null; }
 
             if (!transform) {
@@ -264,7 +314,7 @@ export default function CesiumViewer({ projectId = 1 }) {
               position: position,
               orientation: orientation,
               model: {
-                uri: `${base}/models/erimBaked.gltf`,
+                uri: `${base}/models/bina_model.gltf`,
                 scale: transform.scale,
                 minimumPixelSize: 64,
                 maximumScale: 20000,
@@ -282,7 +332,7 @@ export default function CesiumViewer({ projectId = 1 }) {
 
             // Apply model clipping planes
             try {
-              const planes = JSON.parse(modelData.model_clip_planes);
+              const planes = modelData.model_clip_planes;
               if (Array.isArray(planes) && planes.length > 0) {
                 buildingEntity.model.clippingPlanes = new Cesium.ClippingPlaneCollection({
                   planes: planes.map(pl => new Cesium.ClippingPlane(new Cesium.Cartesian3(pl.normal.x, pl.normal.y, pl.normal.z), pl.distance)),
@@ -296,7 +346,7 @@ export default function CesiumViewer({ projectId = 1 }) {
 
           // Load 360 logo model (if logo_transform present)
           try {
-            const logoTransform = JSON.parse(modelData.logo_transform || '{}');
+            const logoTransform = modelData.logo_transform || {};
             if (logoTransform && logoTransform.position && logoTransform.visible !== false) {
               const logoPosition = Cesium.Cartesian3.fromDegrees(
                 logoTransform.position.lon,
@@ -309,12 +359,13 @@ export default function CesiumViewer({ projectId = 1 }) {
                 Cesium.Math.toRadians(logoTransform.rotation?.roll || 0)
               );
               const logoOrientation = Cesium.Transforms.headingPitchRollQuaternion(logoPosition, logoHpr);
+              console.log('Loading 360 logo:', `${base}/360views/panorama_${projectCode}.gltf`);
               const logoEnt = viewer.entities.add({
                 name: '360 Logo',
                 position: logoPosition,
                 orientation: logoOrientation,
                 model: {
-                  uri: `${base}/360views/360logo.gltf`,
+                  uri: `${base}/360views/panorama_${projectCode}.gltf`,
                   scale: logoTransform.scale || 1.0,
                   minimumPixelSize: 0,
                   maximumScale: 200000,
@@ -323,7 +374,40 @@ export default function CesiumViewer({ projectId = 1 }) {
                 }
               });
               logoEntityRef.current = logoEnt;
-              // Removed custom auto-rotation; rely on glTF's own animations if any
+              // Billboard mode: Make logo always face camera (dynamic orientation update)
+              const logoBillboardTick = () => {
+                if (!logoEnt || viewer.isDestroyed()) return;
+                // Calculate camera-facing orientation (billboard behavior)
+                const cameraPosition = viewer.camera.position;
+                const logoPos = logoEnt.position.getValue(viewer.clock.currentTime);
+                if (!logoPos) return;
+                // Vector from logo to camera
+                const toCamera = Cesium.Cartesian3.subtract(cameraPosition, logoPos, new Cesium.Cartesian3());
+                Cesium.Cartesian3.normalize(toCamera, toCamera);
+                // Create orientation matrix that faces the camera (with 90 degree adjustment)
+                const up = Cesium.Cartesian3.normalize(logoPos, new Cesium.Cartesian3()); // World up at logo position
+                const right = Cesium.Cartesian3.cross(up, toCamera, new Cesium.Cartesian3());
+                Cesium.Cartesian3.normalize(right, right);
+                const actualUp = Cesium.Cartesian3.cross(toCamera, right, new Cesium.Cartesian3());
+                // 90 degree rotation: swap right and toCamera vectors to face correct side
+                const rotationMatrix = new Cesium.Matrix3(
+                  toCamera.x, actualUp.x, -right.x,
+                  toCamera.y, actualUp.y, -right.y,
+                  toCamera.z, actualUp.z, -right.z
+                );
+                // Convert to quaternion
+                let quaternion = Cesium.Quaternion.fromRotationMatrix(rotationMatrix);
+                // Apply additional -90 degree rotation around X axis (clockwise when looking at +X)
+                const xRotation = Cesium.Quaternion.fromAxisAngle(
+                  Cesium.Cartesian3.UNIT_X, 
+                  Cesium.Math.toRadians(-90)
+                );
+                quaternion = Cesium.Quaternion.multiply(quaternion, xRotation, new Cesium.Quaternion());
+                logoEnt.orientation = new Cesium.ConstantProperty(quaternion);
+              };
+              // Register billboard update on every frame
+              logoTickRef.current = logoBillboardTick;
+              viewer.clock.onTick.addEventListener(logoBillboardTick);
             }
           } catch (e) { console.warn('Failed to load 360 logo model:', e); }
         })
@@ -389,6 +473,12 @@ export default function CesiumViewer({ projectId = 1 }) {
         </button>
         <button onClick={() => fly(cameraViews.corner || cameraViews.home || DEFAULT_VIEW)} className="bg-slate-900/60 hover:ring-1 hover:ring-white/10 border border-slate-700/70 hover:border-slate-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105" title="Köşe Görünüm">
           <i className="fas fa-cube text-white text-lg transition-colors duration-200" />
+        </button>
+        <button onClick={setTopView} className="bg-slate-900/60 hover:ring-1 hover:ring-white/10 border border-slate-700/70 hover:border-slate-600 rounded-full w-10 h-10 flex items-center justify-center shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 group" title="Top View (90° Dikey Görünüm)">
+          <div className="relative">
+            <i className="fas fa-arrows-alt text-white text-sm group-hover:rotate-180 transition-transform duration-300" />
+            <div className="absolute -top-1 -right-1 text-xs text-slate-300 font-bold scale-75">90°</div>
+          </div>
         </button>
       </div>
     </div>
