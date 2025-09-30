@@ -453,7 +453,7 @@ export default function CesiumViewer({ projectId = 1 }) {
   useEffect(() => {
     if (!viewerRef.current || !tilesetReadyRef.current) return;
     if (cameraViews.home) fly(cameraViews.home);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [cameraViews.home]);
 
   return (

@@ -4,8 +4,35 @@ const { sanitizeFilename } = require('../utils/sanitizeFilename');
 
 // Allowed mime types and max size (bytes) — configurable via env in future
 const ALLOWED_MIMES = [
-  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-  'application/pdf', 'video/mp4'
+  // Images
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/tiff',
+  // Documents
+  'application/pdf',
+  // Microsoft Office files
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Archives
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/x-rar-compressed',
+  'application/x-7z-compressed',
+  // Text files
+  'text/plain',
+  'text/csv',
+  'application/rtf',
+  // Video
+  'video/mp4',
+  // CAD files (often come as octet-stream)
+  'application/octet-stream',
+  'application/acad',
+  'image/vnd.dwg',
+  'application/dwg',
+  'application/x-dwg',
+  'application/x-autocad'
 ];
 const MAX_FILE_SIZE = Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024); // 10MB default
 

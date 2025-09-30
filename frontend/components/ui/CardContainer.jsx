@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import Card from './Card';
-import { CesiumContext } from '../../context/CesiumContext';
+import { useCesiumCtx } from '../../context/CesiumContext';
 import { createApiUrl, createFileUrl } from '../../config/api';
 
 export default function CardContainer({ projectId = 1 }) {
-  const { projectCode } = useContext(CesiumContext);
+  const { projectCode } = useCesiumCtx();
   const [isMinimized, setIsMinimized] = useState(false);
   const [assets, setAssets] = useState(null);
   const [overlay, setOverlay] = useState({ open: false, title: '', url: '', type: 'iframe', images: [], mode: 'grid', current: 0 });
@@ -106,6 +106,36 @@ export default function CardContainer({ projectId = 1 }) {
     return () => abort.abort();
   }, [projectId]);
 
+  // Fetch gallery from backend folder
+  const loadGallery = useCallback(async (album) => {
+    try {
+      const projectCodeToUse = projectCode || projectId;
+      const res = await fetch(createApiUrl(`api/projects/${projectCodeToUse}/gallery/${album}`), {
+        credentials: 'include'
+      });
+
+      if (!res.ok) return [];
+
+      const result = await res.json();
+
+      // Handle both old direct array and new wrapped format
+      const json = result.data || result;
+      // Normalize: backend returns [{url, title}], convert to {src, name}
+      if (Array.isArray(json)) {
+        const images = json.map((item) => ({
+          src: createFileUrl(item.url),
+          name: item.title || item.filename || 'image.jpg'
+        }));
+        console.log('360 Images loaded:', images.length, 'items');
+        return images;
+      }
+      return [];
+    } catch (error) {
+      console.error('loadGallery error:', error);
+      return [];
+    }
+  }, [projectCode, projectId]);
+
   // Listen for external requests to open 360 viewer (e.g., clicking the 360 logo in Cesium)
   useEffect(() => {
     const onOpenPano = async (ev) => {
@@ -131,42 +161,10 @@ export default function CardContainer({ projectId = 1 }) {
     };
     window.addEventListener('openPano', onOpenPano);
     return () => window.removeEventListener('openPano', onOpenPano);
-  }, []);
+  }, [loadGallery]);
 
   // Use only server-provided assets; avoid hard-coded legacy defaults
   const data = { ...(assets || {}) };
-
-
-  // Fetch gallery from backend folder
-  const loadGallery = async (album) => {
-    try {
-      const projectCodeToUse = projectCode || projectId;
-      
-      const res = await fetch(createApiUrl(`api/projects/${projectCodeToUse}/gallery/${album}`), {
-        credentials: 'include'
-      });
-      
-      if (!res.ok) return [];
-      
-      const result = await res.json();
-      
-      // Handle both old direct array and new wrapped format
-      const json = result.data || result;
-      // Normalize: backend returns [{url, title}], convert to {src, name}
-      if (Array.isArray(json)) {
-        const images = json.map((it) => ({
-          src: createFileUrl(it.url),
-          name: it.title || it.filename || 'image.jpg'
-        }));
-        console.log('360 Images loaded:', images.length, 'items');
-        return images;
-      }
-      return [];
-    } catch (err) {
-      console.error('loadGallery error:', err);
-      return [];
-    }
-  };
 
   // Load PDF documents from the "other" album
   const loadDocs = async () => {
@@ -207,7 +205,7 @@ export default function CardContainer({ projectId = 1 }) {
       } catch (_) {}
     };
     loadZip();
-  }, [projectId, projectCode]);
+  }, [loadGallery]);
 
   // Try to find a DWG in files album to use for Floor Plans download
   useEffect(() => {
@@ -219,7 +217,7 @@ export default function CardContainer({ projectId = 1 }) {
       } catch (_) {}
     };
     loadDwg();
-  }, [projectId, projectCode]);
+  }, [loadGallery]);
 
   useEffect(() => {
     const loadFbx = async () => {
@@ -230,7 +228,7 @@ export default function CardContainer({ projectId = 1 }) {
       } catch (_) {}
     };
     loadFbx();
-  }, [projectId, projectCode]);
+  }, [loadGallery]);
 
   const toEmbedUrl = (url) => {
     if (!url) return url;
@@ -790,13 +788,6 @@ export default function CardContainer({ projectId = 1 }) {
                                 >
                                   🔗 Yeni Sekme
                                 </button>
-                                <button
-                                  onClick={() => window.open(src, '_blank')}
-                                  className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
-                                  title="İndir"
-                                >
-                                  ⬇️ İndir
-                                </button>
                               </>
                             ) : (
                               // For non-image / non-pdf files show a single İndir button (styled like Görüntüle)
@@ -953,8 +944,8 @@ export default function CardContainer({ projectId = 1 }) {
               />
 
               <Card
-                title="Diğer Dosyalar"
-                subtitle="Applikasyon Krokisi,İmar Durumu,Tapu,..."
+                title="Raporlar ve Diğer Dosyalar"
+                subtitle="Raporlar,Applikasyon Krokisi,Tapu,..."
                 icon={FileIcon}
                 color="slate"
                 actions={[

@@ -117,9 +117,12 @@ NODE_ENV=development
    ```
 
 3. **Default Admin Account:**
-   - Phone: `05000000000`
+   - Phone: `05326225500`
    - Password: `admin123`
+   - Role: `superadmin`
    - Access admin panel at: `/admin/login`
+   
+   **Important:** Change this password immediately after first login in production!
 
 ## API Endpoints
 

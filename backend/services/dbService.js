@@ -189,10 +189,14 @@ class UserService {
                p.project_code,
                p.name as project_name,
                p.description,
+               p.toplam_insaat_alan,
+               p.parsel_alan,
+               p.bina_sayisi,
+               p.bagimsiz_birim_sayi,
                up.granted_at as assigned_at
         FROM projects p
         INNER JOIN user_projects up ON p.id = up.project_id
-        WHERE up.user_id = ?
+        WHERE up.user_id = ? AND p.is_active = 1
         ORDER BY up.granted_at DESC
       `, [userId], (err, rows) => {
         if (err) {
@@ -298,32 +302,6 @@ class UserService {
           });
         });
       });
-    });
-  }
-}
-
-/**
- * Database service layer for admin operations
- */
-class AdminService {
-  /**
-   * Get admin by phone number
-   * @param {string} phone - Admin phone number
-   * @returns {Promise<Object|null>} Admin object or null if not found
-   */
-  static getAdminByPhone(phone) {
-    return new Promise((resolve, reject) => {
-      db.get(
-        'SELECT id, phone, password_hash, role FROM admins WHERE phone = ?',
-        [phone],
-        (err, row) => {
-          if (err) {
-            reject(handleDatabaseError(err));
-          } else {
-            resolve(row || null);
-          }
-        }
-      );
     });
   }
 }
@@ -438,7 +416,7 @@ class ProjectService {
   static getAllProjects() {
     return new Promise((resolve, reject) => {
       db.all(
-        'SELECT id, project_code, name, description, is_active, created_at FROM projects ORDER BY created_at DESC',
+        'SELECT id, project_code, name, description, toplam_insaat_alan, parsel_alan, bina_sayisi, bagimsiz_birim_sayi, is_active, created_at FROM projects ORDER BY created_at DESC',
         [],
         (err, rows) => {
           if (err) {
@@ -459,7 +437,7 @@ class ProjectService {
   static getProjectById(projectId) {
     return new Promise((resolve, reject) => {
       db.get(
-        'SELECT id, project_code, name, description, is_active, created_at FROM projects WHERE id = ?',
+        'SELECT id, project_code, name, description, toplam_insaat_alan, parsel_alan, bina_sayisi, bagimsiz_birim_sayi, is_active, created_at FROM projects WHERE id = ?',
         [projectId],
         (err, row) => {
           if (err) {
@@ -480,7 +458,7 @@ class ProjectService {
   static getProjectByCode(projectCode) {
     return new Promise((resolve, reject) => {
       db.get(
-        'SELECT id, project_code, name, description, is_active, created_at FROM projects WHERE project_code = ?',
+        'SELECT id, project_code, name, description, toplam_insaat_alan, parsel_alan, bina_sayisi, bagimsiz_birim_sayi, is_active, created_at FROM projects WHERE project_code = ?',
         [projectCode],
         (err, row) => {
           if (err) {
@@ -500,11 +478,27 @@ class ProjectService {
    */
   static createProject(projectData) {
     return new Promise((resolve, reject) => {
-      const { project_code, name, description } = projectData;
+      const { 
+        project_code, 
+        name, 
+        description, 
+        toplam_insaat_alan, 
+        parsel_alan, 
+        bina_sayisi, 
+        bagimsiz_birim_sayi 
+      } = projectData;
       
       db.run(
-        'INSERT INTO projects (project_code, name, description, is_active) VALUES (?, ?, ?, 1)',
-        [project_code, name, description || null],
+        'INSERT INTO projects (project_code, name, description, toplam_insaat_alan, parsel_alan, bina_sayisi, bagimsiz_birim_sayi, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+        [
+          project_code, 
+          name, 
+          description || null, 
+          toplam_insaat_alan || null, 
+          parsel_alan || null, 
+          bina_sayisi || null, 
+          bagimsiz_birim_sayi || null
+        ],
         function(err) {
           if (err) {
             reject(handleDatabaseError(err));
@@ -524,7 +518,16 @@ class ProjectService {
    */
   static updateProject(projectId, updateData) {
     return new Promise((resolve, reject) => {
-      const { project_code, name, description, is_active } = updateData;
+      const { 
+        project_code, 
+        name, 
+        description, 
+        is_active, 
+        toplam_insaat_alan, 
+        parsel_alan, 
+        bina_sayisi, 
+        bagimsiz_birim_sayi 
+      } = updateData;
       const updates = [];
       const params = [];
       
@@ -543,6 +546,22 @@ class ProjectService {
       if (is_active !== undefined) {
         updates.push('is_active = ?');
         params.push(is_active);
+      }
+      if (toplam_insaat_alan !== undefined) {
+        updates.push('toplam_insaat_alan = ?');
+        params.push(toplam_insaat_alan);
+      }
+      if (parsel_alan !== undefined) {
+        updates.push('parsel_alan = ?');
+        params.push(parsel_alan);
+      }
+      if (bina_sayisi !== undefined) {
+        updates.push('bina_sayisi = ?');
+        params.push(bina_sayisi);
+      }
+      if (bagimsiz_birim_sayi !== undefined) {
+        updates.push('bagimsiz_birim_sayi = ?');
+        params.push(bagimsiz_birim_sayi);
       }
       
       if (updates.length === 0) {
@@ -567,14 +586,16 @@ class ProjectService {
   }
 
   /**
-   * Delete project (soft delete - set is_active to false)
-   * Also cleans up related database records
+   * Delete project (HARD DELETE - permanently removes from database)
+   * WARNING: This action cannot be undone!
    * @param {number} projectId - Project ID
    * @returns {Promise<boolean>} Success status
    */
   static deleteProject(projectId) {
     return new Promise((resolve, reject) => {
       db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        
         // Clean up related records first
         const cleanupQueries = [
           // Remove user project assignments
@@ -590,25 +611,33 @@ class ProjectService {
         ];
 
         let completed = 0;
-        const totalQueries = cleanupQueries.length + 1; // +1 for the final project update
+        let hasError = false;
 
         // Execute cleanup queries
         for (const query of cleanupQueries) {
+          if (hasError) break;
+          
           db.run(query, [projectId], (err) => {
-            if (err) {
-              console.error('Error cleaning up related records:', err);
+            if (err && !hasError) {
+              hasError = true;
+              console.error('Error during project deletion cleanup:', err);
+              db.run('ROLLBACK');
+              return reject(handleDatabaseError(err));
             }
+            
             completed++;
-            if (completed === cleanupQueries.length) {
-              // Now soft delete the project
+            if (completed === cleanupQueries.length && !hasError) {
+              // Now permanently delete the project record
               db.run(
-                'UPDATE projects SET is_active = 0 WHERE id = ?',
+                'DELETE FROM projects WHERE id = ?',
                 [projectId],
                 function(err) {
                   if (err) {
+                    db.run('ROLLBACK');
                     reject(handleDatabaseError(err));
                   } else {
-                    console.log(`Project ${projectId} soft deleted and related records cleaned up`);
+                    db.run('COMMIT');
+                    console.log(`Project ${projectId} permanently deleted along with all related records`);
                     resolve(this.changes > 0);
                   }
                 }
@@ -1010,7 +1039,6 @@ class GalleryService {
 
 module.exports = {
   UserService,
-  AdminService,
   ProjectService,
   ModelService,
   GalleryService

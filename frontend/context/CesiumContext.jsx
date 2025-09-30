@@ -1,7 +1,7 @@
 import { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
 import { createApiUrl } from '../config/api';
 
-export const CesiumContext = createContext(null);
+const CesiumContext = createContext(null);
 
 // Load saved building transform: prefer published, fallback to working, else default
 const loadBuildingTransform = () => {
@@ -212,7 +212,6 @@ export function CesiumProvider({ children, projectId: initialProjectId = 1 }) {
   return <CesiumContext.Provider value={value}>{children}</CesiumContext.Provider>;
 }
 
-// eslint-disable-next-line
 export function useCesiumCtx() {
   const ctx = useContext(CesiumContext);
   if (!ctx) throw new Error('useCesiumCtx must be used within CesiumProvider');

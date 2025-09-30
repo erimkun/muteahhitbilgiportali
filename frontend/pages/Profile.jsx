@@ -244,19 +244,71 @@ export default function Profile() {
       {/* Main Content */}
       <div className="relative z-10 container mx-auto px-6 py-8">
         {/* Welcome Section */}
-        <div className="card-border rounded-2xl p-8 mb-8">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold leading-tight inline-block mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              Hoşgeldiniz, {user?.name || 'Kullanıcı'}!
-            </h2>
-            <p className="text-lg text-gray-300 mb-2">
-              📱 Telefon: {user?.phone}
-            </p>
-            {(user?.role === 'admin' || user?.role === 'superadmin') && (
-              <p className="text-lg text-yellow-400">
-                👑 {user.role === 'superadmin' ? 'Süper Yönetici' : 'Yönetici'}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* User Info */}
+          <div className="card-border rounded-2xl p-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold leading-tight inline-block mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                Hoşgeldiniz, {user?.name || 'Kullanıcı'}!
+              </h2>
+              <p className="text-lg text-gray-300 mb-2">
+                📱 Telefon: {user?.phone}
               </p>
-            )}
+              {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                <p className="text-lg text-yellow-400 mb-4">
+                  👑 {user.role === 'superadmin' ? 'Süper Yönetici' : 'Yönetici'}
+                </p>
+              )}
+              
+              <div className="mt-6 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  <span className="font-medium text-white">Müteahhit Bilgi Portalı</span>'nda projelerinize ait tüm bilgilere erişebilir,
+                  <span className="text-blue-400"> 3D modellerine</span>, 
+                  <span className="text-green-400"> drone fotoğraflarına</span>, 
+                  <span className="text-purple-400"> 360° görüntülere</span>, 
+                  <span className="text-orange-400"> kat planlarına</span> ve 
+                  <span className="text-cyan-400"> teknik dokümanlara</span> ulaşabilirsiniz.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Project Statistics */}
+          <div className="card-border rounded-2xl p-8">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">
+                <span className="text-2xl mr-2">📊</span>
+                <span className="bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                  Genel İstatistikler
+                </span>
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-3 rounded-lg border border-blue-500/30">
+                  <div className="text-2xl font-bold text-blue-400">
+                    {userProjects.reduce((sum, project) => sum + (parseFloat(project.toplam_insaat_alan) || 0), 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-300 mt-1">Toplam İnşaat Alanı (m²)</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-500/20 to-teal-500/20 p-3 rounded-lg border border-green-500/30">
+                  <div className="text-2xl font-bold text-green-400">
+                    {userProjects.reduce((sum, project) => sum + (parseFloat(project.parsel_alan) || 0), 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-300 mt-1">Toplam Parsel Alanı (m²)</div>
+                </div>
+                <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 p-3 rounded-lg border border-orange-500/30">
+                  <div className="text-2xl font-bold text-orange-400">
+                    {userProjects.reduce((sum, project) => sum + (parseInt(project.bina_sayisi) || 0), 0)}
+                  </div>
+                  <div className="text-xs text-gray-300 mt-1">Toplam Bina Sayısı</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-3 rounded-lg border border-purple-500/30">
+                  <div className="text-2xl font-bold text-purple-400">
+                    {userProjects.reduce((sum, project) => sum + (parseInt(project.bagimsiz_birim_sayi) || 0), 0)}
+                  </div>
+                  <div className="text-xs text-gray-300 mt-1">Toplam Bağımsız Birim</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -290,6 +342,30 @@ export default function Profile() {
                     <p className="text-gray-300 leading-relaxed">
                       <span className="font-medium text-gray-200">Bilgi:</span> {project.description || 'Açıklama bulunmuyor.'}
                     </p>
+                    
+                    {/* Proje İstatistikleri */}
+                    <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                      {project.toplam_insaat_alan && (
+                        <p>
+                          <span className="font-medium text-gray-200">İnşaat Alanı:</span> {project.toplam_insaat_alan} m²
+                        </p>
+                      )}
+                      {project.parsel_alan && (
+                        <p>
+                          <span className="font-medium text-gray-200">Parsel Alanı:</span> {project.parsel_alan} m²
+                        </p>
+                      )}
+                      {project.bina_sayisi && (
+                        <p>
+                          <span className="font-medium text-gray-200">Bina Sayısı:</span> {project.bina_sayisi}
+                        </p>
+                      )}
+                      {project.bagimsiz_birim_sayi && (
+                        <p>
+                          <span className="font-medium text-gray-200">Bağımsız Birim:</span> {project.bagimsiz_birim_sayi}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-gray-600">

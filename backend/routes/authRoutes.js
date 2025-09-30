@@ -9,6 +9,8 @@ const { asyncHandler } = require('../middlewares/errorHandler');
 
 const router = express.Router();
 
+const allowLegacyAdminLogin = process.env.ALLOW_LEGACY_ADMIN_LOGIN === 'true';
+
 /**
  * Authentication Routes
  */
@@ -37,9 +39,13 @@ router.post('/login', (req, res) => {
   res.status(400).json({ error: 'Lütfen önce kimlik bilgilerinizi doğrulayın ve OTP girin.' });
 });
 
-router.post('/admin/login', (req, res) => {
-  res.status(400).json({ error: 'Lütfen önce kimlik bilgilerinizi doğrulayın ve OTP girin.' });
-});
+if (allowLegacyAdminLogin) {
+  router.post('/admin/login', authController.adminLogin);
+} else {
+  router.post('/admin/login', (req, res) => {
+    res.status(400).json({ error: 'Lütfen önce kimlik bilgilerinizi doğrulayın ve OTP girin.' });
+  });
+}
 
 // Admin routes
 router.get('/admin/login', authController.adminLoginPage);

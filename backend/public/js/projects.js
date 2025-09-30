@@ -58,12 +58,22 @@ function renderProjectsTable() {
     const row = document.createElement('tr');
     const formattedDate = new Date(project.created_at).toLocaleDateString('tr-TR');
 
+    // Format numeric values or show dash if null/undefined
+    const formatValue = (value) => {
+      if (value === null || value === undefined || value === '') return '-';
+      return value;
+    };
+
     // Use data attributes for identifying actions instead of inline onclick
     row.innerHTML =
       '<td>' + project.id + '</td>' +
       '<td><strong>' + project.project_code + '</strong></td>' +
       '<td>' + project.name + '</td>' +
       '<td>' + (project.description || '-') + '</td>' +
+      '<td>' + formatValue(project.toplam_insaat_alan) + '</td>' +
+      '<td>' + formatValue(project.parsel_alan) + '</td>' +
+      '<td>' + formatValue(project.bina_sayisi) + '</td>' +
+      '<td>' + formatValue(project.bagimsiz_birim_sayi) + '</td>' +
       '<td>' +
         '<span class="status-badge ' + (project.is_active ? 'status-active' : 'status-inactive') + '">' +
           (project.is_active ? 'Aktif' : 'Pasif') +
@@ -88,7 +98,11 @@ async function createProject(e) {
   const projectData = {
     project_code: formData.get('project_code'),
     name: formData.get('name'),
-    description: formData.get('description')
+    description: formData.get('description'),
+    toplam_insaat_alan: formData.get('toplam_insaat_alan') || null,
+    parsel_alan: formData.get('parsel_alan') || null,
+    bina_sayisi: formData.get('bina_sayisi') || null,
+    bagimsiz_birim_sayi: formData.get('bagimsiz_birim_sayi') || null
   };
 
   const createBtn = document.getElementById('createBtn');
@@ -174,14 +188,31 @@ function editProject(projectId) {
   const project = projects.find(p => p.id === projectId);
   if (project) {
     const newName = prompt('Yeni proje adı:', project.name);
+    if (newName === null) return; // User cancelled
+    
     const newDesc = prompt('Yeni açıklama:', project.description || '');
+    if (newDesc === null) return; // User cancelled
+    
+    const newToplamInsaatAlan = prompt('Toplam İnşaat Alanı (m²):', project.toplam_insaat_alan || '');
+    if (newToplamInsaatAlan === null) return; // User cancelled
+    
+    const newParselAlan = prompt('Parsel Alanı (m²):', project.parsel_alan || '');
+    if (newParselAlan === null) return; // User cancelled
+    
+    const newBinaSayisi = prompt('Bina Sayısı:', project.bina_sayisi || '');
+    if (newBinaSayisi === null) return; // User cancelled
+    
+    const newBagimsizBirimSayi = prompt('Bağımsız Birim Sayısı:', project.bagimsiz_birim_sayi || '');
+    if (newBagimsizBirimSayi === null) return; // User cancelled
 
-    if (newName !== null) {
-      updateProject(projectId, {
-        name: newName,
-        description: newDesc
-      });
-    }
+    updateProject(projectId, {
+      name: newName,
+      description: newDesc,
+      toplam_insaat_alan: newToplamInsaatAlan || null,
+      parsel_alan: newParselAlan || null,
+      bina_sayisi: newBinaSayisi || null,
+      bagimsiz_birim_sayi: newBagimsizBirimSayi || null
+    });
   }
 }
 

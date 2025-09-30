@@ -48,6 +48,15 @@ body {
 .form-group {
   margin-bottom: 15px;
 }
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
 label {
   display: block;
   margin-bottom: 5px;

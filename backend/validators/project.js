@@ -11,7 +11,19 @@ const createProjectValidators = [
   body('description')
     .optional()
     .isString().withMessage('Description must be a string')
-    .isLength({ max: 2000 }).withMessage('Description too long')
+    .isLength({ max: 2000 }).withMessage('Description too long'),
+  body('toplam_insaat_alan')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Toplam inşaat alanı 0 veya pozitif bir sayı olmalıdır'),
+  body('parsel_alan')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Parsel alanı 0 veya pozitif bir sayı olmalıdır'),
+  body('bina_sayisi')
+    .optional()
+    .isInt({ min: 0 }).withMessage('Bina sayısı 0 veya pozitif bir tam sayı olmalıdır'),
+  body('bagimsiz_birim_sayi')
+    .optional()
+    .isInt({ min: 0 }).withMessage('Bağımsız birim sayısı 0 veya pozitif bir tam sayı olmalıdır')
 ];
 
 const updateProjectValidators = [

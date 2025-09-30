@@ -10,7 +10,6 @@ export default function Login() {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('credentials'); // 'credentials' or 'otp'
   const [loading, setLoading] = useState(false);
-  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
   const [remainingTime, setRemainingTime] = useState(0);
   const [errors, setErrors] = useState({});
   const [checking, setChecking] = useState(true);
@@ -33,7 +32,7 @@ export default function Login() {
             return;
           }
         }
-      } catch (error) {
+      } catch {
         console.log('No existing session');
       } finally {
         setChecking(false);
@@ -80,7 +79,6 @@ export default function Login() {
 
       if (res.ok) {
         setStep('otp');
-        setOtpExpiresAt(new Date(js.data.expiresAt));
         setRemainingTime(300); // 5 minutes
       } else {
         setErrors({ form: js.error || 'Doğrulama başarısız' });
@@ -144,7 +142,6 @@ export default function Login() {
   function resetToCredentials() {
     setStep('credentials');
     setOtp('');
-    setOtpExpiresAt(null);
     setRemainingTime(0);
     setErrors({});
   }
@@ -306,7 +303,9 @@ export default function Login() {
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       if (rafId) cancelAnimationFrame(rafId);
-      try { if (vShader) gl.deleteShader(vShader); if (fShader) gl.deleteShader(fShader); if (program) gl.deleteProgram(program); } catch (e) {}
+      try { if (vShader) gl.deleteShader(vShader); if (fShader) gl.deleteShader(fShader); if (program) gl.deleteProgram(program); } catch {
+        // WebGL cleanup errors are expected during page unload
+      }
     };
   }, []);
 

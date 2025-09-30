@@ -131,17 +131,35 @@ const getProject = asyncHandler(async (req, res) => {
  */
 const createProject = asyncHandler(async (req, res) => {
   try {
-    const { project_code, name, description } = req.body;
+    const { 
+      project_code, 
+      name, 
+      description,
+      toplam_insaat_alan,
+      parsel_alan,
+      bina_sayisi,
+      bagimsiz_birim_sayi
+    } = req.body;
+    
+    console.log('🔍 Received project data:', req.body);
     
     if (!project_code || !name) {
       return res.status(400).json(formatErrorResponse('Project code and name are required'));
     }
     
-    const projectId = await ProjectService.createProject({
+    const projectData = {
       project_code,
       name,
-      description
-    });
+      description,
+      toplam_insaat_alan: toplam_insaat_alan || null,
+      parsel_alan: parsel_alan || null,
+      bina_sayisi: bina_sayisi || null,
+      bagimsiz_birim_sayi: bagimsiz_birim_sayi || null
+    };
+    
+    console.log('🔍 Creating project with data:', projectData);
+    
+    const projectId = await ProjectService.createProject(projectData);
     
     // Proje klasör yapısını oluştur
     await ProjectService.createProjectDirectoryStructure(projectId);
@@ -164,14 +182,33 @@ const updateProject = asyncHandler(async (req, res) => {
   const projectId = parseProjectId(req.params.id);
   
   try {
-    const { project_code, name, description, is_active } = req.body;
+    const { 
+      project_code, 
+      name, 
+      description, 
+      is_active,
+      toplam_insaat_alan,
+      parsel_alan,
+      bina_sayisi,
+      bagimsiz_birim_sayi
+    } = req.body;
     
-    const updated = await ProjectService.updateProject(projectId, {
+    console.log('🔍 Received update data:', req.body);
+    
+    const updateData = {
       project_code,
       name,
       description,
-      is_active
-    });
+      is_active,
+      toplam_insaat_alan: toplam_insaat_alan !== undefined ? toplam_insaat_alan : undefined,
+      parsel_alan: parsel_alan !== undefined ? parsel_alan : undefined,
+      bina_sayisi: bina_sayisi !== undefined ? bina_sayisi : undefined,
+      bagimsiz_birim_sayi: bagimsiz_birim_sayi !== undefined ? bagimsiz_birim_sayi : undefined
+    };
+    
+    console.log('🔍 Updating project with data:', updateData);
+    
+    const updated = await ProjectService.updateProject(projectId, updateData);
     
     if (!updated) {
       return res.status(404).json(formatErrorResponse('Project not found'));

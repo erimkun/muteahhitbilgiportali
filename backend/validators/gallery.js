@@ -1,7 +1,24 @@
 const { body, param } = require('express-validator');
 
+const projectIdValidator = (value) => {
+  if (typeof value !== 'string') {
+    throw new Error('projectId must be provided');
+  }
+
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) {
+    return true;
+  }
+
+  if (/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+    return true;
+  }
+
+  throw new Error('projectId must be a numeric id or project code');
+};
+
 const uploadValidators = [
-  param('projectId').isInt().withMessage('projectId must be an integer'),
+  param('projectId').custom(projectIdValidator),
   param('album').optional().isString().trim().isLength({ min: 1 }).withMessage('Album invalid'),
   body('category').optional().isString().trim(),
   body('title').optional().isString().trim().isLength({ min: 1 }).withMessage('Title invalid'),
@@ -12,15 +29,15 @@ const uploadValidators = [
 ];
 
 const deleteByFilenameValidators = [
-  param('projectId').isInt().withMessage('projectId must be an integer'),
+  param('projectId').custom(projectIdValidator),
   param('album').isString().trim().isLength({ min: 1 }).withMessage('Album invalid'),
   param('filename').isString().trim().isLength({ min: 1 }).withMessage('Filename invalid')
 ];
 
 const bulkDeleteValidators = [
-  param('projectId').isInt().withMessage('projectId must be an integer'),
+  param('projectId').custom(projectIdValidator),
   param('album').isString().trim().isLength({ min: 1 }).withMessage('Album invalid'),
   body('ids').isArray({ min: 1 }).withMessage('Provide ids array')
 ];
 
-module.exports = { uploadValidators, deleteByFilenameValidators, bulkDeleteValidators };
+module.exports = { projectIdValidator, uploadValidators, deleteByFilenameValidators, bulkDeleteValidators };

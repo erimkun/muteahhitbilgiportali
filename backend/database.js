@@ -111,7 +111,18 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
         )`, (err) => {
             if (err) {
                 console.error('Failed creating projects table', err);
+                // Add new columns for existing databases
+                db.run('ALTER TABLE projects ADD COLUMN toplam_insaat_alan REAL', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN parsel_alan REAL', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN bina_sayisi INTEGER', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN bagimsiz_birim_sayi INTEGER', [], () => {});
             } else {
+                // Table just created, add new columns
+                db.run('ALTER TABLE projects ADD COLUMN toplam_insaat_alan REAL', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN parsel_alan REAL', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN bina_sayisi INTEGER', [], () => {});
+                db.run('ALTER TABLE projects ADD COLUMN bagimsiz_birim_sayi INTEGER', [], () => {});
+                
                 // Seed default project if not present
                 db.get('SELECT id FROM projects WHERE id = 1', [], (e, row) => {
                     if (!row) {
@@ -153,7 +164,27 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_login TIMESTAMP
         )`, (err) => {
-            if (err) console.error('Failed creating users table', err);
+            if (err) {
+                console.error('Failed creating users table', err);
+            } else {
+                // Seed a default superadmin user if none exists (phone: 05326225500 / password: admin123)
+                db.get('SELECT COUNT(*) AS c FROM users WHERE role IN (?, ?)', ['admin', 'superadmin'], (e, row) => {
+                    if (!e && row && row.c === 0) {
+                        const bcrypt = require('bcryptjs');
+                        const hash = bcrypt.hashSync('admin123', 10);
+                        db.run('INSERT INTO users (phone, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?)', 
+                            ['05326225500', hash, 'System Administrator', 'superadmin', 1], 
+                            function(err) {
+                                if (err) {
+                                    console.error('Failed to create default admin user:', err);
+                                } else {
+                                    console.log('Default superadmin user created successfully with ID:', this.lastID);
+                                }
+                            }
+                        );
+                    }
+                });
+            }
         });
 
         // User-Project many-to-many relationship table
@@ -171,26 +202,6 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
         )`, (err) => {
             if (err) {
                 console.error('Failed creating user_projects table', err);
-            }
-        });
-
-        // Admins table
-        db.run(`CREATE TABLE IF NOT EXISTS admins (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            phone TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            role TEXT DEFAULT 'admin',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`, (err) => {
-            if (err) console.error('Failed creating admins table', err); else {
-                // Seed a default admin if none exists (phone: 05000000000 / password: admin123)
-                db.get('SELECT COUNT(*) AS c FROM admins', [], (e,row)=>{
-                    if(!e && row && row.c === 0){
-                        const bcrypt = require('bcryptjs');
-                        const hash = bcrypt.hashSync('admin123', 10);
-                        db.run('INSERT INTO admins (phone, password_hash, role) VALUES (?,?,?)', ['05000000000', hash, 'superadmin']);
-                    }
-                });
             }
         });
     }

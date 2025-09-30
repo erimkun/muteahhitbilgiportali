@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { checkAuthStatus, getRedirectPath } from '../utils/authUtils';
+import { checkAuthStatus } from '../utils/authUtils';
 
 /**
  * ProtectedRoute component that checks authentication and redirects appropriately
@@ -16,7 +16,7 @@ export default function ProtectedRoute({ children }) {
     async function verifyAuth() {
       try {
         setLoading(true);
-        const { isAuthenticated, user, isAdmin } = await checkAuthStatus();
+        const { isAuthenticated, isAdmin } = await checkAuthStatus();
         
         // Determine if current path requires authentication or admin access
         const currentPath = location.pathname;

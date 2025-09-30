@@ -1,7 +1,7 @@
 import React from 'react';
 import * as Cesium from 'cesium';
 import { useCesiumCtx } from '../../context/CesiumContext';
-import CuttingTool from './CuttingTool';
+import AdvancedCuttingTool from './AdvancedCuttingTool';
 import ModelCutTool from './ModelCutTool';
 import RestoreClipTool from './RestoreClipTool';
 import ModelSelectionTool from './ModelSelectionTool';
@@ -11,7 +11,7 @@ const tools = [
   { id: 'measure', label: 'Measure' },
   { id: 'area', label: 'Select Area' },
   { id: 'box', label: 'Box Selection' },
-  { id: 'cut', label: 'Cutting Tool' },
+  { id: 'cut', label: 'Precision Cut' },
   { id: 'building', label: 'Building' },
   { id: 'logo', label: 'Logo' },
   { id: 'modelSelect', label: 'Model Select' },
@@ -468,7 +468,7 @@ export default function Toolbox() {
             </div>
           )}
           {/* clip / replace / building tools removed */}
-          {activeTool === 'cut' && <CuttingTool />}
+          {activeTool === 'cut' && <AdvancedCuttingTool />}
           {activeTool === 'modelSelect' && <ModelSelectionTool />}
           {activeTool === 'modelCut' && <ModelCutTool />}
           {activeTool === 'restoreClip' && <RestoreClipTool />}

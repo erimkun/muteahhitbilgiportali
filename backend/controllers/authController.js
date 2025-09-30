@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { UserService, AdminService } = require('../services/dbService');
+const { UserService } = require('../services/dbService');
 const { normalizePhone, validateRequiredFields, formatErrorResponse, formatSuccessResponse } = require('../utils/helpers');
 const { asyncHandler } = require('../middlewares/errorHandler');
 const SMSService = require('../services/smsService');
@@ -99,18 +99,26 @@ const verifyUserOTP = asyncHandler(async (req, res) => {
       return res.status(401).json(formatErrorResponse('Geçersiz kimlik bilgileri'));
     }
 
-    // Set user session
-    req.session.user = {
-      id: user.id,
-      phone: user.phone,
-      name: user.name,
-      role: user.role || 'user'
-    };
+    // Regenerate session for security (prevent session fixation)
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('Session regeneration error:', err);
+        return res.status(500).json(formatErrorResponse('Oturum oluşturma hatası'));
+      }
 
-    res.json(formatSuccessResponse(
-      { user: req.session.user },
-      'Giriş başarılı'
-    ));
+      // Set user session
+      req.session.user = {
+        id: user.id,
+        phone: user.phone,
+        name: user.name,
+        role: user.role || 'user'
+      };
+
+      res.json(formatSuccessResponse(
+        { user: req.session.user },
+        'Giriş başarılı'
+      ));
+    });
   } catch (error) {
     console.error('OTP verification error:', error);
     res.status(500).json(formatErrorResponse('Doğrulama başarısız'));
@@ -205,25 +213,33 @@ const verifyAdminOTP = asyncHandler(async (req, res) => {
       return res.status(401).json(formatErrorResponse('Geçersiz kimlik bilgileri'));
     }
 
-    // Set admin session (both admin and user for compatibility)
-    req.session.admin = {
-      id: admin.id,
-      phone: admin.phone,
-      role: admin.role,
-      name: admin.name
-    };
-    
-    req.session.user = {
-      id: admin.id,
-      phone: admin.phone,
-      role: admin.role,
-      name: admin.name
-    };
+    // Regenerate session for security (prevent session fixation)
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('Session regeneration error:', err);
+        return res.status(500).json(formatErrorResponse('Oturum oluşturma hatası'));
+      }
 
-    res.json(formatSuccessResponse(
-      { admin: req.session.admin, user: req.session.user },
-      'Admin girişi başarılı'
-    ));
+      // Set admin session (both admin and user for compatibility)
+      req.session.admin = {
+        id: admin.id,
+        phone: admin.phone,
+        role: admin.role,
+        name: admin.name
+      };
+      
+      req.session.user = {
+        id: admin.id,
+        phone: admin.phone,
+        role: admin.role,
+        name: admin.name
+      };
+
+      res.json(formatSuccessResponse(
+        { admin: req.session.admin, user: req.session.user },
+        'Admin girişi başarılı'
+      ));
+    });
   } catch (error) {
     console.error('OTP verification error:', error);
     res.status(500).json(formatErrorResponse('Doğrulama başarısız'));
@@ -497,8 +513,13 @@ const adminLoginPage = (req, res) => {
  * Logout
  */
 const logout = (req, res) => {
-  req.session.destroy(() => {});
-  res.json(formatSuccessResponse({}, 'Logged out successfully'));
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Session destroy error:', err);
+      return res.status(500).json(formatErrorResponse('Çıkış işlemi başarısız'));
+    }
+    res.json(formatSuccessResponse({}, 'Çıkış başarılı'));
+  });
 };
 
 /**
@@ -513,6 +534,7 @@ const getSession = (req, res) => {
 
 module.exports = {
   userLogin,
+  adminLogin,
   adminLoginLegacy,
   adminLoginPage,
   logout,

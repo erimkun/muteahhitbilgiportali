@@ -6,6 +6,7 @@ const path = require('path');
 // Use a temp DB and uploads dir for isolation
 process.env.DBSOURCE = path.join(os.tmpdir(), `test_db_${Date.now()}.sqlite`);
 process.env.UPLOADS_DIR = path.join(os.tmpdir(), `test_uploads_${Date.now()}`);
+process.env.ALLOW_LEGACY_ADMIN_LOGIN = 'true';
 
 const app = require('../index');
 
