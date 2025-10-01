@@ -31,7 +31,18 @@ Bu doküman, uygulamanın production ortamına alınmadan önce yapılması gere
   - Legacy dosyalar (`legacy/` klasörü) üretim kodlarıyla karışmış olabilir; gereksiz veya eski dosyalar temizlenmelidir.
 
 - **Ortam Ayarları:**
-  - `config/env.js` dosyasındaki üretim (production) ayarlarının doğru olduğundan emin olunmalı.
+  - **Backend:** `.env.production` dosyası oluşturuldu - şu değerleri mutlaka güncelleyin:
+    - `SESSION_SECRET` - Güçlü rastgele secret oluşturun
+    - `COOKIE_DOMAIN` - Domain adınızı yazın
+    - `CORS_ORIGIN` - Frontend URL'inizi yazın  
+    - `API_BASE_URL` - Backend API URL'inizi yazın
+    - `ADMIN_PHONE` - Default telefon numarasını değiştirin
+    - `ADMIN_PASSWORD` - Default şifreyi değiştirin
+    - `SMS_API_*` - Production SMS API bilgilerini yazın
+    - `SMS_TEST_MODE=false` - Test modu kapatın
+  - **Frontend:** `.env.production` dosyası oluşturuldu - şu değerleri güncelleyin:
+    - `VITE_API_BASE_URL` - Backend API URL'inizi yazın
+    - `VITE_CESIUM_ION_TOKEN` - Cesium Ion token'ınızı yazın
   - Gizli anahtarlar ve API tokenları güvenli bir şekilde saklanmalı.
 
 ## Frontend Hazırlıkları

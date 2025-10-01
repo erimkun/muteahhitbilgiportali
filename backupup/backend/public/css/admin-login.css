@@ -1,0 +1,176 @@
+/* Extracted admin-login styles (migrated from root admin-login.html) */
+body {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+	color: #fff;
+	margin: 0;
+	padding: 0;
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.login-container {
+	background: rgba(255, 255, 255, 0.1);
+	padding: 40px;
+	border-radius: 15px;
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	max-width: 400px;
+	width: 100%;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.logo {
+	text-align: center;
+	margin-bottom: 30px;
+}
+.logo h1 {
+	color: #4ade80;
+	font-size: 2.5rem;
+	margin: 0;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+.logo p {
+	color: rgba(255, 255, 255, 0.8);
+	margin: 5px 0 0 0;
+}
+.form-group {
+	margin-bottom: 20px;
+}
+label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.9);
+}
+input {
+	width: 100%;
+	padding: 15px;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	border-radius: 8px;
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	font-size: 16px;
+	box-sizing: border-box;
+	transition: all 0.3s ease;
+}
+input:focus {
+	outline: none;
+	border-color: #4ade80;
+	box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2);
+}
+input::placeholder {
+	color: rgba(255, 255, 255, 0.6);
+}
+button {
+	width: 100%;
+	padding: 15px;
+	background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+	color: #000;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	margin-top: 10px;
+}
+button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+}
+button:disabled {
+	background: #666;
+	cursor: not-allowed;
+	transform: none;
+	color: #999;
+}
+.error-message {
+	background: rgba(239, 68, 68, 0.2);
+	border: 1px solid #ef4444;
+	color: #ef4444;
+	padding: 12px;
+	border-radius: 6px;
+	margin-bottom: 20px;
+	font-weight: 500;
+	display: none;
+}
+.loading {
+	display: none;
+}
+
+/* Hidden class for step management */
+.hidden {
+	display: none;
+}
+
+/* OTP specific styles */
+.otp-input {
+	text-align: center;
+	font-size: 24px;
+	font-weight: bold;
+	letter-spacing: 0.5rem;
+	font-family: 'Courier New', monospace;
+}
+
+.otp-info {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+.otp-info p {
+	color: rgba(255, 255, 255, 0.8);
+	margin-bottom: 10px;
+}
+
+.timer {
+	font-size: 32px;
+	font-weight: bold;
+	color: #4ade80;
+	font-family: 'Courier New', monospace;
+	margin-bottom: 10px;
+}
+
+/* Button group styles */
+.button-group {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 15px;
+}
+
+.button-group button {
+	flex: 1;
+}
+
+.secondary-btn {
+	background: rgba(255, 255, 255, 0.2) !important;
+	color: #fff !important;
+	border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+.secondary-btn:hover {
+	background: rgba(255, 255, 255, 0.3) !important;
+	transform: none !important;
+	box-shadow: none !important;
+}
+
+/* Resend button */
+.resend-btn {
+	width: 100%;
+	background: transparent !important;
+	color: rgba(255, 255, 255, 0.7) !important;
+	border: 1px solid rgba(255, 255, 255, 0.3) !important;
+	font-size: 14px !important;
+	margin-top: 10px !important;
+	padding: 12px !important;
+}
+
+.resend-btn:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
+	color: #fff !important;
+}
+
+.resend-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

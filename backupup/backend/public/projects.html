@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Proje Yönetimi</title>
-  <link rel="stylesheet" href="/css/projects.css">
+  <link rel="stylesheet" href="css/projects.css">
 </head>
 <body>
   <div class="container">
@@ -14,8 +14,9 @@
         <p id="adminInfo">Yükleniyor...</p>
       </div>
   <div class="nav-links">
-  <a href="/upload">📁 Dosya Yükle</a>
-  <a href="/files">🗂️ Dosya Yöneticisi</a>
+  <a href="upload">📁 Dosya Yükle</a>
+  <a href="files">🗂️ Dosya Yöneticisi</a>
+  <a href="users">👥 Kullanıcı Yönetimi</a>
     <button class="logout-btn" id="logoutBtn">Çıkış</button>
   </div>
     </div>
@@ -38,6 +39,30 @@
           <label for="description">Açıklama</label>
           <textarea id="description" name="description" rows="3" placeholder="Proje açıklaması (opsiyonel)"></textarea>
         </div>
+        
+        <!-- Yeni Alanlar -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="toplam_insaat_alan">Toplam İnşaat Alanı (m²)</label>
+            <input type="number" id="toplam_insaat_alan" name="toplam_insaat_alan" placeholder="m²" min="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label for="parsel_alan">Parsel Alanı (m²)</label>
+            <input type="number" id="parsel_alan" name="parsel_alan" placeholder="m²" min="0" step="0.01">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bina_sayisi">Bina Sayısı</label>
+            <input type="number" id="bina_sayisi" name="bina_sayisi" placeholder="Adet" min="0" step="1">
+          </div>
+          <div class="form-group">
+            <label for="bagimsiz_birim_sayi">Bağımsız Birim Sayısı</label>
+            <input type="number" id="bagimsiz_birim_sayi" name="bagimsiz_birim_sayi" placeholder="Adet" min="0" step="1">
+          </div>
+        </div>
+        
         <button type="submit" id="createBtn">Proje Oluştur</button>
       </form>
     </div>
@@ -53,6 +78,10 @@
             <th>Proje Kodu</th>
             <th>Proje Adı</th>
             <th>Açıklama</th>
+            <th>Toplam İnşaat Alanı (m²)</th>
+            <th>Parsel Alanı (m²)</th>
+            <th>Bina Sayısı</th>
+            <th>Bağımsız Birim Sayısı</th>
             <th>Durum</th>
             <th>Oluşturma Tarihi</th>
             <th>İşlemler</th>
@@ -64,6 +93,6 @@
     </div>
   </div>
 
-  <script src="/js/projects.js" defer></script>
+  <script src="js/projects.js" defer></script>
 </body>
 </html>
